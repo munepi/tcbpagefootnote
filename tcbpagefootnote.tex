@@ -1,0 +1,167 @@
+%% tcbpagefootnote.tex -- documentation for the tcbpagefootnote package
+%%
+%% Copyright (c) 2026 Munehiro Yamamoto <munepixyz@gmail.com>
+%% License: LPPL 1.3c or later
+%%
+%% Build: pdflatex tcbpagefootnote.tex (twice)
+\documentclass{article}
+\usepackage[margin=28mm]{geometry}
+\usepackage{xcolor}
+\usepackage{tcbpagefootnote}
+\usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
+\newcommand*\tpfversion{v1.0 (2026/10/25)}
+\newcommand*\cs[1]{\texttt{\char`\\#1}}
+\newcommand*\pkg[1]{\textsf{#1}}
+\newcommand*\key[1]{\texttt{#1}}
+\newcommand*\meta[1]{$\langle$\textit{#1}$\rangle$}
+\tcbset{colframe=black!60, colback=black!3, fonttitle=\bfseries}
+
+\title{The \pkg{tcbpagefootnote} package\\
+  \large Page footnotes from inside tcolorbox}
+\author{Munehiro Yamamoto\\
+  \url{https://github.com/munepi/tcbpagefootnote}}
+\date{\tpfversion}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\pkg{tcolorbox} typesets the content of a box like a \texttt{minipage}:
+a \cs{footnote} inside the box is numbered with the \texttt{mpfootnote}
+counter (a, b, \dots) and its text is put at the bottom of the box.
+This is often what you want for a box that stands apart from the text,
+but not for a box that is part of the running text, such as a note or
+a definition in a book: there, the footnotes should be numbered along
+with those of the body text and put at the bottom of the page.
+
+The \pkg{tcbpagefootnote} package adds the \pkg{tcolorbox} key
+\key{page footnote} for this.  The two boxes below differ only in this
+key.
+
+\begin{tcolorbox}[title=An ordinary box]
+A footnote in an ordinary box\footnote{This footnote is put at the
+  bottom of the box.} is a footnote of the box.
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=A box with \key{page footnote}, page footnote]
+A footnote in a box with \key{page footnote}\footnote{This footnote is
+  put at the bottom of the page.} is a footnote of the page, numbered
+along with the footnotes of the body text.
+\end{tcolorbox}
+
+\paragraph{Supported formats/engines}
+pdf\LaTeX, Xe\LaTeX, Lua\LaTeX{} (with or without Lua\TeX-ja),
+p\LaTeX{} and up\LaTeX{} (with dvipdfmx).  The package requires
+\pkg{tcolorbox} and loads its \texttt{hooks} library.
+
+\section{Usage}
+
+\begin{verbatim}
+\usepackage{tcbpagefootnote}
+
+\begin{tcolorbox}[title=Note, page footnote]
+  Text\footnote{A page footnote.}.
+\end{tcolorbox}
+
+\newtcolorbox{note}[1][]{colback=blue!5, page footnote, #1}
+\tcbset{page footnote}  % for every box
+\end{verbatim}
+
+\noindent
+The key acts on the footnotes in the title, the upper part and the lower
+part of the box:
+\begin{itemize}
+\item the marks are made with the \texttt{footnote} counter and
+  \cs{thefootnote}, as in the body text;
+\item the texts are collected while the box is typeset and are put into
+  the ordinary footnote insertion right after the box, so that they go
+  to the bottom of the page where the box is.  If the box does not fit
+  on the current page and moves to the next one, its footnotes move
+  with it.
+\end{itemize}
+\cs{footnote}\texttt{[\meta{number}]}, \cs{footnotemark} with
+\cs{footnotetext}, \cs{tcbox}, and boxes with \key{page footnote} inside
+each other work as usual.  An ordinary box inside a box with
+\key{page footnote} keeps its own footnotes.  With \pkg{hyperref}, each
+footnote mark links to its own footnote text.
+
+\section{Errors and warnings}
+
+\begin{description}
+\item[\texttt{The key 'page footnote' cannot be used with 'float'.}]
+  A floating box (\key{float}) is not followed by the code that puts the
+  footnotes.
+\item[\texttt{The 'after' code of this box no longer flushes the page
+  footnotes.}] The footnotes are put by the \key{after pre} code of the
+  \texttt{hooks} library.  Keys that set the whole \texttt{after} code
+  (\key{after}, \key{after skip}, \key{nobeforeafter}, \dots) remove it
+  when they come after \key{page footnote}: give them before it, e.g.\
+  \verb|[after skip=1pt, page footnote]|.
+\item[\texttt{The tcolorbox key 'page footnote' is already defined.}]
+  Another package defines a key of the same name; \pkg{tcbpagefootnote}
+  does not redefine it.
+\item[\texttt{This box is broken across pages.} (warning)] See below.
+\end{description}
+
+\section{Limitations}
+
+\begin{itemize}
+\item A \key{breakable} box that is broken across pages puts the
+  footnote texts of all its parts on the page where the box ends: the
+  content of a breakable box is typeset as a whole before it is split,
+  and footnote insertions do not travel with the split parts.  The
+  package issues a warning for such a box when it has footnotes.  The
+  footnotes of a breakable box that is not broken are put as usual.
+\item \key{page footnote} cannot be used with \key{float}.
+\item Vertical writing (tate) of p\LaTeX{} and Lua\TeX-ja has not been
+  tested.
+\end{itemize}
+
+\section{Tests}
+
+\verb|make test| compiles the test files with pdf\LaTeX, Xe\LaTeX,
+Lua\LaTeX, p\LaTeX{} and up\LaTeX{} (+ dvipdfmx) and checks the log.
+For every footnote, \texttt{test-common.tex} writes the page and the
+mark of the footnote mark and of the footnote text to the \texttt{.aux}
+file at shipout, together with whether the text is set in the full
+\cs{columnwidth} of the page (a page footnote) or in a box; when the
+\texttt{.aux} file is read back at \verb|\end{document}|, it checks
+that every text is typeset exactly once, with its own mark, on the
+expected page (\texttt{TPF-RESULT OK}).
+
+\begin{center}
+\begin{tabular}{ll}
+  \hline
+  Test & What it covers\\
+  \hline
+  \texttt{test-basic.tex}     & title/upper/lower, nesting, \cs{tcbox},
+                                a box moved to the next page\\
+  \texttt{test-hyperref.tex}  & \texttt{test-basic.tex} with
+                                \pkg{hyperref}: no duplicate anchors\\
+  \texttt{test-breakable.tex} & broken and unbroken breakable boxes,
+                                the warning\\
+  \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
+                                ujbook)\\
+  \texttt{test-errors.tex}    & the error messages\\
+  \hline
+\end{tabular}
+\end{center}
+
+\section{History}
+
+\begin{description}
+\item[v1.0 (2026/10/25)] First public release.
+\end{description}
+
+\section{License}
+
+This package is licensed under the conditions of the \LaTeX{} Project
+Public License, either version~1.3c of this license or any later
+version.
+
+\medskip
+\noindent
+Copyright \copyright{} 2026 Munehiro Yamamoto
+
+\end{document}
