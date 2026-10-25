@@ -1,0 +1,12 @@
+*.aux
+*.log
+*.out
+*.toc
+*.dvi
+*.xdv
+*.synctex.gz
+*.term
+test-*.pdf
+tcbpagefootnote.zip
+*~
+.DS_Store

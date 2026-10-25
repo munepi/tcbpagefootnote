@@ -1,0 +1,44 @@
+# ctan.toml -- metadata for "ctango upload".
+# Keys follow the CTAN submission API: https://ctan.org/help/submit
+# uploader/email are taken from ~/.config/ctango/config.toml or git config.
+
+pkg         = "tcbpagefootnote"
+ctanPath    = "/macros/latex/contrib/tcbpagefootnote"
+summary     = "Page footnotes from inside tcolorbox"
+description = '''
+<p>
+tcolorbox typesets the content of a box like a minipage: a
+<code>\footnote</code> inside the box is numbered with the mpfootnote
+counter and its text is put at the bottom of the box.  This package
+adds the tcolorbox key <code>page footnote</code>, with which the
+footnotes in the title, upper and lower part of a box are numbered
+along with the footnotes of the body text and are put at the bottom
+of the page where the box is.
+</p>
+<p>
+Nested boxes, <code>\footnotemark</code>/<code>\footnotetext</code>,
+<code>\tcbox</code> and hyperref (each footnote text keeps the anchor
+of its own mark) are supported.  A breakable box broken across pages
+puts its footnote texts on the page where the box ends, with a warning.
+</p>
+<p>
+Supported formats/engines: <code>pdflatex</code>, <code>xelatex</code>,
+<code>lualatex</code>, <code>platex</code>, <code>uplatex</code>
+(with <code>dvipdfmx</code>).
+</p>
+'''
+author      = ["Munehiro Yamamoto"]
+license     = ["lppl1.3c"]
+topic       = ["footnote", "boxing"]
+# home        = "https://..."
+bugtracker  = ["https://github.com/munepi/tcbpagefootnote/issues"]
+# support     = "https://..."
+repository  = ["https://github.com/munepi/tcbpagefootnote"]
+# development = "https://..."
+
+archive     = "tcbpagefootnote.zip"  # built by "make ctanzip"
+
+# The version is read from this file (\ProvidesPackage / \ProvidesExplPackage).
+# Add pattern = '...' to use your own regular expression (first group = version).
+[version]
+file        = "tcbpagefootnote.sty"
