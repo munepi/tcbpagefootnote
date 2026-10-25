@@ -1,0 +1,208 @@
+%% test-common.tex
+%% ===============
+%% Helpers shared by the test files; \input this file after
+%% \usepackage{tcbpagefootnote}.
+%%
+%% \TPFfootnote[<kind>]{<text>}
+%%   \footnote{<text>} with a check of where its text is typeset.
+%%   <kind> (default: page) is one of
+%%     page   a page footnote on the page of its mark;
+%%     box    a footnote of the box (as in a minipage) on the page of
+%%            its mark;
+%%     later  a page footnote on a later page than its mark (a box
+%%            broken across pages).
+%% \TPFmark{<id>} and \TPFtext{<id>}{<kind>}
+%%   The two halves of \TPFfootnote, for \footnote[<num>],
+%%   \footnotemark and \footnotetext: put \TPFmark right after the mark
+%%   and \TPFtext at the beginning of the text.  <id> is any name that
+%%   is not a number (numbers are used by \TPFfootnote).
+%% \TPFcounter{<counter>}{<value>}
+%%   Check the value of <counter> at this point.
+%%
+%% For each mark and each text, the page, the mark (\@thefnmark) and,
+%% for a text, whether it is set in the full \columnwidth of the page
+%% (a page footnote) are written to the .aux file at shipout.  When the
+%% .aux file is read back at \end{document}, every mark is checked:
+%%   * its text is typeset exactly once, with the same mark;
+%%   * the text is where <kind> says.
+%% Logs "TPF-NOTE NG: ..." for each failure, then "TPF-RESULT OK (<n>
+%% notes)" or "TPF-RESULT NG".  A single run is enough.
+\makeatletter
+\ExplSyntaxOn
+\int_new:N  \g__tpf_id_int
+\seq_new:N  \g__tpf_ids_seq
+\bool_new:N \g__tpf_ng_bool
+\dim_new:N  \g__tpf_colwd_dim
+\tl_new:N   \l__tpf_tmp_tl
+\AddToHook { begindocument/end }
+  { \dim_gset:Nn \g__tpf_colwd_dim { \columnwidth } }
+
+\cs_new_protected:Npn \__tpf_ng:n #1
+  {
+    \bool_gset_true:N \g__tpf_ng_bool
+    \iow_term:e { TPF-NOTE~NG:~#1 }
+  }
+
+%% Write to the .aux file at shipout; #1 is frozen now except \thepage
+\cs_new_protected:Npn \__tpf_shipout:n #1
+  {
+    \tl_set:Ne \l__tpf_tmp_tl {#1}
+    \exp_args:NNV \iow_shipout_e:Nn \@auxout \l__tpf_tmp_tl
+  }
+\cs_new:Npn \__tpf_frozen_mark:
+  { \exp_not:N \exp_not:n { \exp_not:o { \@thefnmark } } }
+
+\NewDocumentCommand \TPFmark { m }
+  {
+    \seq_gput_right:Nn \g__tpf_ids_seq {#1}
+    \__tpf_shipout:n
+      {
+        \exp_not:N \exp_not:N \exp_not:N \TPF@m
+        {#1} { \exp_not:N \thepage } { \__tpf_frozen_mark: }
+      }
+  }
+\NewDocumentCommand \TPFtext { m m }
+  {
+    \__tpf_shipout:n
+      {
+        \exp_not:N \exp_not:N \exp_not:N \TPF@t
+        {#1} {#2} { \exp_not:N \thepage } { \__tpf_frozen_mark: }
+        { \dim_compare:nNnTF { \hsize } = { \g__tpf_colwd_dim } { 1 } { 0 } }
+      }
+  }
+\NewDocumentCommand \TPFfootnote { O{page} +m }
+  {
+    \int_gincr:N \g__tpf_id_int
+    \exp_args:NV \__tpf_footnote:nnn \g__tpf_id_int {#1} {#2}
+  }
+\cs_new_protected:Npn \__tpf_footnote:nnn #1#2#3
+  { \footnote { \TPFtext {#1} {#2} #3 } \TPFmark {#1} }
+
+\NewDocumentCommand \TPFcounter { m m }
+  {
+    \int_compare:nNnTF { \value {#1} } = {#2}
+      { \iow_term:e { TPF-COUNTER~OK:~#1=#2 } }
+      { \__tpf_ng:n { counter~#1=\int_use:c { c@#1 },~want~#2 } }
+  }
+
+%% The records in the .aux file are ignored when it is read at
+%% \begin{document} (they come from the previous run)
+\cs_new_eq:NN \TPF@m \use_none:nnn
+\cs_new_eq:NN \TPF@t \use_none:nnnnn
+\cs_new_protected:Npn \__tpf_record_mark:nnn #1#2#3
+  {
+    \tl_gset:cn { g__tpf_mpage_#1_tl } {#2}
+    \tl_gset:cn { g__tpf_mmark_#1_tl } {#3}
+  }
+\cs_new_protected:Npn \__tpf_record_text:nnnnn #1#2#3#4#5
+  {
+    \int_if_exist:cF { g__tpf_tcount_#1_int }
+      { \int_new:c { g__tpf_tcount_#1_int } }
+    \int_gincr:c { g__tpf_tcount_#1_int }
+    \tl_gset:cn { g__tpf_tkind_#1_tl } {#2}
+    \tl_gset:cn { g__tpf_tpage_#1_tl } {#3}
+    \tl_gset:cn { g__tpf_tmark_#1_tl } {#4}
+    \tl_gset:cn { g__tpf_twide_#1_tl } {#5}
+  }
+\AddToHook { enddocument/afterlastpage }
+  {
+    \cs_gset_eq:NN \TPF@m \__tpf_record_mark:nnn
+    \cs_gset_eq:NN \TPF@t \__tpf_record_text:nnnnn
+  }
+\AddToHook { enddocument/afteraux } { \__tpf_check: }
+
+\cs_new_protected:Npn \__tpf_check:
+  {
+    \seq_map_function:NN \g__tpf_ids_seq \__tpf_check_one:n
+    \seq_if_empty:NT \g__tpf_ids_seq { \__tpf_ng:n { no~footnotes } }
+    \bool_if:NTF \g__tpf_ng_bool
+      { \iow_term:n { TPF-RESULT~NG } }
+      {
+        \iow_term:e
+          { TPF-RESULT~OK~(\seq_count:N \g__tpf_ids_seq\c_space_tl notes) }
+      }
+  }
+\cs_new_protected:Npn \__tpf_check_one:n #1
+  {
+    \tl_if_exist:cTF { g__tpf_mpage_#1_tl }
+      {
+        \int_if_exist:cTF { g__tpf_tcount_#1_int }
+          {
+            \int_compare:nNnTF { \int_use:c { g__tpf_tcount_#1_int } } = { 1 }
+              { \__tpf_check_text:n {#1} }
+              {
+                \__tpf_ng:n
+                  { #1:~text~typeset~\int_use:c { g__tpf_tcount_#1_int }~times }
+              }
+          }
+          { \__tpf_ng:n { #1:~text~lost } }
+      }
+      { \__tpf_ng:n { #1:~mark~not~shipped~out } }
+  }
+\cs_new_protected:Npn \__tpf_check_text:n #1
+  {
+    \tl_set:Ne \l__tpf_tmp_tl
+      {
+        #1:~\tl_use:c { g__tpf_tkind_#1_tl },~
+        mark~\tl_use:c { g__tpf_mmark_#1_tl }~
+        on~p.\tl_use:c { g__tpf_mpage_#1_tl },~
+        text~\tl_use:c { g__tpf_tmark_#1_tl }~
+        on~p.\tl_use:c { g__tpf_tpage_#1_tl }~
+        \str_if_eq:eeTF { \tl_use:c { g__tpf_twide_#1_tl } } { 1 }
+          { (page) } { (box) }
+      }
+    \bool_if:nTF
+      {
+        \tl_if_eq_p:cc { g__tpf_mmark_#1_tl } { g__tpf_tmark_#1_tl }
+        && \__tpf_where_p:n {#1}
+      }
+      { \iow_term:e { TPF-NOTE~OK:~\l__tpf_tmp_tl } }
+      { \__tpf_ng:n { \l__tpf_tmp_tl } }
+  }
+\prg_new_conditional:Npnn \__tpf_where:n #1 { p }
+  {
+    \str_case_e:nnF { \tl_use:c { g__tpf_tkind_#1_tl } }
+      {
+        { page }
+          {
+            \bool_if:nTF
+              {
+                \int_compare_p:nNn { \tl_use:c { g__tpf_tpage_#1_tl } }
+                  = { \tl_use:c { g__tpf_mpage_#1_tl } }
+                && \str_if_eq_p:ee { \tl_use:c { g__tpf_twide_#1_tl } } { 1 }
+              }
+              { \prg_return_true: } { \prg_return_false: }
+          }
+        { box }
+          {
+            \bool_if:nTF
+              {
+                \int_compare_p:nNn { \tl_use:c { g__tpf_tpage_#1_tl } }
+                  = { \tl_use:c { g__tpf_mpage_#1_tl } }
+                && \str_if_eq_p:ee { \tl_use:c { g__tpf_twide_#1_tl } } { 0 }
+              }
+              { \prg_return_true: } { \prg_return_false: }
+          }
+        { later }
+          {
+            \bool_if:nTF
+              {
+                \int_compare_p:nNn { \tl_use:c { g__tpf_tpage_#1_tl } }
+                  > { \tl_use:c { g__tpf_mpage_#1_tl } }
+                && \str_if_eq_p:ee { \tl_use:c { g__tpf_twide_#1_tl } } { 1 }
+              }
+              { \prg_return_true: } { \prg_return_false: }
+          }
+      }
+      { \prg_return_false: }
+  }
+\ExplSyntaxOff
+
+%% \TPFfiller{<n>}: a paragraph of <n> filler sentences
+\newcommand\TPF@filler{%
+  This is a filler sentence of plain English text for the test. }
+\newcommand\TPFfiller[1]{%
+  \count@=0
+  \loop\advance\count@ by 1 \TPF@filler\ifnum\count@<#1 \repeat\par}
+\makeatother
+\endinput

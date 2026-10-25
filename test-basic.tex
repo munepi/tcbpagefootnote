@@ -1,0 +1,108 @@
+%% test-basic.tex
+%% ==============
+%% Typesetting test for every engine: the footnotes of the boxes with
+%% "page footnote" are page footnotes on the page of their marks.
+%%
+%%   pdflatex test-basic.tex   (or xelatex / lualatex)
+%%   platex  test-basic.tex && dvipdfmx test-basic
+%%   uplatex -jobname=test-basic "\def\CLS{ujarticle}\input test-basic"
+%% The class is article by default; set \CLS for another one (jarticle,
+%% ujarticle, ltjsarticle, ...).  With pTeX the class option dvipdfmx
+%% is given.
+%%
+%% What is covered:
+%%   * footnotes in the body text, and in the title, upper and lower
+%%     part of a box, several in one box;
+%%   * \footnote[<num>], \footnotemark + \footnotetext in a box;
+%%   * a box with "page footnote" inside another one, and an ordinary
+%%     box (a footnote of the box) inside a box with "page footnote";
+%%   * an ordinary box for comparison;
+%%   * \tcbox, a box defined by \newtcolorbox, and \tcbset{page footnote};
+%%   * a box that does not fit at the bottom of a page and moves to the
+%%     next page: its footnotes move with it.
+%%
+%% test-hyperref.tex runs this file with hyperref.
+%%
+%% What to check:
+%%   * TPF-RESULT OK, TPF-COUNTER OK, and no error or warning.
+\ifdefined\CLS\else\def\CLS{article}\fi
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
+\usepackage{tcbpagefootnote}
+\ifdefined\TPFhyperref\usepackage{hyperref}\fi
+\input{test-common}
+\newtcolorbox{notebox}[1][]{colback=blue!5!white, page footnote, #1}
+\begin{document}
+\section*{Footnotes in boxes}
+
+Body text\TPFfootnote{A footnote in the body text.}.
+
+\begin{tcolorbox}[title=Title\TPFfootnote{A footnote in the title.},
+  page footnote]
+Upper part\TPFfootnote{The first footnote in the upper part.} and
+again\TPFfootnote{The second footnote in the upper part.}.
+\tcblower
+Lower part\TPFfootnote{A footnote in the lower part.}.
+\end{tcolorbox}
+
+An ordinary box for comparison:
+\begin{tcolorbox}
+Ordinary box\TPFfootnote[box]{A footnote of the ordinary box.}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[page footnote]
+Optional argument\footnote[9]{\TPFtext{opt}{page}A footnote numbered
+9.}\TPFmark{opt}, and footnotemark\footnotemark\TPFmark{fm}.
+\footnotetext{\TPFtext{fm}{page}The text for the footnotemark.}
+\end{tcolorbox}
+
+Body text after the box\TPFfootnote{The numbering goes on.}.
+
+\newpage
+\section*{Nested boxes}
+
+\begin{tcolorbox}[page footnote]
+Outer box\TPFfootnote{The first footnote of the outer box.}.
+\begin{tcolorbox}[page footnote]
+Inner box\TPFfootnote{A footnote of the inner box.}.
+\end{tcolorbox}
+Outer box again\TPFfootnote{The second footnote of the outer box.}.
+\begin{tcolorbox}
+Ordinary inner box\TPFfootnote[box]{A footnote of the ordinary inner
+  box.}.
+\end{tcolorbox}
+\end{tcolorbox}
+
+\section*{Other boxes}
+
+Inline \tcbox[page footnote]{tcbox\TPFfootnote{A footnote in a tcbox.}}
+in a paragraph.
+
+\begin{notebox}[title=notebox]
+Box by newtcolorbox\TPFfootnote{A footnote in a notebox.}.
+\end{notebox}
+
+\begingroup
+\tcbset{page footnote}
+\begin{tcolorbox}
+Set by tcbset\TPFfootnote{A footnote in a box set by tcbset.}.
+\end{tcolorbox}
+\endgroup
+
+\newpage
+\section*{A box at the bottom of a page}
+
+\TPFfiller{1}
+\vspace{\dimexpr\textheight-12\baselineskip\relax}
+\TPFfiller{1}
+\begin{tcolorbox}[page footnote]
+This box does not fit at the bottom of the page\TPFfootnote{A footnote of
+  the box moved to the next page.}.
+\TPFfiller{6}
+\end{tcolorbox}
+
+Body text after the box\TPFfootnote{The last footnote.}.
+
+\TPFcounter{footnote}{15}
+\TPFcounter{mpfootnote}{0}
+\end{document}

@@ -1,0 +1,60 @@
+%% test-japanese.tex
+%% =================
+%% Typesetting test for the Japanese classes: the demonstration of the
+%% "page footnote" key in Japanese.
+%%
+%%   lualatex test-japanese.tex
+%%   platex  -jobname=test-japanese "\def\CLS{jbook}\input test-japanese"
+%%   uplatex -jobname=test-japanese "\def\CLS{ujbook}\input test-japanese"
+%%   (then dvipdfmx test-japanese)
+%% The class is ltjbook by default; with pTeX the class option dvipdfmx
+%% is given.
+%%
+%% What to check:
+%%   * TPF-RESULT OK, TPF-COUNTER OK, and no error or warning.
+%%   * In the PDF, the footnote of box 1 is at the bottom of the box,
+%%     and those of boxes 2 and 3 are at the bottom of the page.
+\ifdefined\CLS\else\def\CLS{ltjbook}\fi
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT,a5paper]{\CLS}
+\usepackage{tcbpagefootnote}
+\input{test-common}
+\begin{document}
+
+\section*{page footnoteキーのテスト}
+
+これは通常の本文です。まずは通常の脚注\TPFfootnote{本文中の通常の脚注です。ページ下部に出力されます。}をテストします。
+
+\begin{tcolorbox}[
+  title=1. 通常のtcolorbox（デフォルト）,
+  colframe=gray!75!black,
+  colback=gray!5!white
+]
+デフォルトのtcolorboxの中で脚注\TPFfootnote[box]{デフォルトでは、minipage環境と同様にボックスの内部（下端）に出力されます。}を書くと、このようになります。
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+  title=2. page footnoteを適用したtcolorbox,
+  colframe=blue!75!black,
+  colback=blue!5!white,
+  page footnote
+]
+page footnoteキーを適用したtcolorboxの中で脚注\TPFfootnote{この脚注はボックスの中ではなく、本文の脚注と同じようにページの下部に出力されます。}を書くと、ページ下部へ出力されます。
+
+1つのボックス内に複数の脚注%
+\TPFfootnote{2つ目の脚注も、番号が続いてページ下部に追加されます。}を書くこともできます。
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+  title=3. 続けてもう1つ,
+  colframe=blue!75!black,
+  colback=blue!5!white,
+  page footnote
+]
+次のボックスの脚注\TPFfootnote{番号は本文の脚注と通しで付きます。}も、同じようにページ下部へ出力されます。
+\end{tcolorbox}
+
+\verb|tcolorbox|の体裁を保ったまま、本文と同じ位置に脚注\TPFfootnote{最後の脚注です。}を配置できます。
+
+\TPFcounter{footnote}{5}
+\end{document}

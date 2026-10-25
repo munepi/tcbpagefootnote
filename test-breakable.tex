@@ -1,0 +1,46 @@
+%% test-breakable.tex
+%% ==================
+%% Typesetting test for breakable boxes with "page footnote".
+%%
+%%   pdflatex test-breakable.tex   (or xelatex / lualatex)
+%%   platex  test-breakable.tex && dvipdfmx test-breakable
+%%   uplatex -jobname=test-breakable "\def\CLS{ujarticle}\input test-breakable"
+%%
+%% What is covered:
+%%   * a box broken across pages by \tcbbreak: the footnote texts of
+%%     all its parts are put on the page where the box ends, and the
+%%     package warns once;
+%%   * a breakable box that is not broken, and an unbreakable box after
+%%     the broken one: no warning.
+%%
+%% What to check:
+%%   * TPF-RESULT OK, and exactly one tcbpagefootnote warning
+%%     ("This box is broken across pages").
+\ifdefined\CLS\else\def\CLS{article}\fi
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
+\usepackage{tcbpagefootnote}
+\tcbuselibrary{breakable}
+\input{test-common}
+\begin{document}
+\section*{Breakable boxes}
+
+\begin{tcolorbox}[breakable, page footnote]
+A breakable box that is not broken\TPFfootnote{A footnote of the
+  unbroken box.}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[breakable, page footnote]
+The first part of a broken box\TPFfootnote[later]{A footnote of the
+  first part.}.
+\tcbbreak
+The second part of the box\TPFfootnote{A footnote of the second part.}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[page footnote]
+An unbreakable box after the broken one\TPFfootnote{A footnote of the
+  unbreakable box.}.
+\end{tcolorbox}
+
+\TPFcounter{footnote}{4}
+\end{document}

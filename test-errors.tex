@@ -1,0 +1,38 @@
+%% test-errors.tex
+%% ===============
+%% The errors of tcbpagefootnote.  Run with -interaction=nonstopmode and
+%% select the case by \CASE:
+%%
+%%   pdflatex -interaction=nonstopmode -jobname=test-errors-float \
+%%     "\def\CASE{float}\input test-errors"
+%%
+%% Cases and the error message to find in the log:
+%%   float    "page footnote" with "float":
+%%            "The key 'page footnote' cannot be used with 'float'."
+%%   after    "after skip" given after "page footnote":
+%%            "The 'after' code of this box no longer flushes the page
+%%            footnotes."
+%%   defined  the key "page footnote" is defined before the package is
+%%            loaded:
+%%            "The tcolorbox key 'page footnote' is already defined."
+\ifdefined\CASE\else\def\CASE{float}\fi
+\documentclass{article}
+\def\TPFcase#1{\def\TPFtmp{#1}\ifx\TPFtmp\CASE}
+\TPFcase{defined}
+  \RequirePackage{tcolorbox}
+  \tcbset{page footnote/.style={}}
+\fi
+\usepackage{tcbpagefootnote}
+\begin{document}
+\TPFcase{float}
+  \begin{tcolorbox}[float, page footnote]
+  A float box\footnote{A footnote.}.
+  \end{tcolorbox}
+\fi
+\TPFcase{after}
+  \begin{tcolorbox}[page footnote, after skip=1pt]
+  A box\footnote{A footnote.}.
+  \end{tcolorbox}
+\fi
+Text.
+\end{document}

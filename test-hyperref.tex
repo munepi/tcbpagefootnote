@@ -1,0 +1,17 @@
+%% test-hyperref.tex
+%% =================
+%% test-basic.tex with hyperref: each footnote text in a box gets the
+%% anchor of its own mark.
+%%
+%%   pdflatex test-hyperref.tex   (or xelatex / lualatex)
+%%   platex  test-hyperref.tex && dvipdfmx test-hyperref
+%%   uplatex -jobname=test-hyperref "\def\CLS{ujarticle}\input test-hyperref"
+%%
+%% What to check:
+%%   * TPF-RESULT OK, TPF-COUNTER OK, and no error or warning.
+%%   * In the log and the terminal output (including that of
+%%     (x)dvipdfmx), no warning on a duplicate destination
+%%     (Hfootnote.<n>) or on a destination that does not exist.
+%%   * In the PDF, each footnote mark links to its own footnote text.
+\def\TPFhyperref{1}
+\input{test-basic}
