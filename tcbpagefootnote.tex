@@ -114,7 +114,7 @@ footnote mark links to its own footnote text.
   package issues a warning for such a box when it has footnotes.  The
   footnotes of a breakable box that is not broken are put as usual.
 \item \key{page footnote} cannot be used with \key{float}.
-\item Vertical writing (tate) is out of the scope of this version.  With
+\item Vertical writing (tate) is outside the scope of this version.  With
   (u)p\LaTeX{} and dvipdfmx, \pkg{tcolorbox} itself does not work in
   tate, since the dvipdfmx driver of TikZ/PGF does not support it;
   this is to be handled by a separate package.
@@ -124,9 +124,9 @@ footnote mark links to its own footnote text.
 
 \verb|make test| compiles the test files with pdf\LaTeX, Xe\LaTeX,
 Lua\LaTeX, p\LaTeX{} and up\LaTeX{} (+ dvipdfmx) and checks the log.
-For every footnote, \texttt{test-common.tex} writes the page and the
-mark of the footnote mark and of the footnote text to the \texttt{.aux}
-file at shipout, together with whether the text is set in the full
+For every footnote, \texttt{test-common.tex} records in the
+\texttt{.aux} file at shipout the page and the mark of both the footnote
+mark and the footnote text, and whether the text is set in the full
 \cs{columnwidth} of the page (a page footnote) or in a box; when the
 \texttt{.aux} file is read back at \verb|\end{document}|, it checks
 that every text is typeset exactly once, with its own mark, on the

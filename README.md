@@ -49,7 +49,7 @@ Copy `tcbpagefootnote.sty` to your local TeX tree:
 * `page footnote` cannot be used with `float` (error).
 * Keys that set the whole `after` code (`after`, `after skip`, `nobeforeafter`, ...) remove the code that puts the footnotes when they come after `page footnote` (error): give them before it, e.g. `[after skip=1pt, page footnote]`.
 * A `breakable` box that is broken across pages puts the footnote texts of all its parts on the page where the box ends, and the package warns. The content of a breakable box is typeset as a whole before it is split, and footnote insertions do not travel with the split parts.
-* Vertical writing (tate) is out of the scope of this version. With (u)pLaTeX and dvipdfmx, tcolorbox itself does not work in tate, since the dvipdfmx driver of TikZ/PGF does not support it; this is to be handled by a separate package.
+* Vertical writing (tate) is outside the scope of this version. With (u)pLaTeX and dvipdfmx, tcolorbox itself does not work in tate, since the dvipdfmx driver of TikZ/PGF does not support it; this is to be handled by a separate package.
 
 ## Testing
 
