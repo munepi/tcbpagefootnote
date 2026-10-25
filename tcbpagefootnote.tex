@@ -114,8 +114,10 @@ footnote mark links to its own footnote text.
   package issues a warning for such a box when it has footnotes.  The
   footnotes of a breakable box that is not broken are put as usual.
 \item \key{page footnote} cannot be used with \key{float}.
-\item Vertical writing (tate) of p\LaTeX{} and Lua\TeX-ja has not been
-  tested.
+\item Vertical writing (tate) is out of the scope of this version.  With
+  (u)p\LaTeX{} and dvipdfmx, \pkg{tcolorbox} itself does not work in
+  tate, since the dvipdfmx driver of TikZ/PGF does not support it;
+  this is to be handled by a separate package.
 \end{itemize}
 
 \section{Tests}
