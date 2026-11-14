@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tcbpagefootnote}
 \usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
-\newcommand*\tpfversion{v1.0 (2026/10/25)}
+\newcommand*\tpfversion{v1.1 (2026/11/14)}
 \newcommand*\cs[1]{\texttt{\char`\\#1}}
 \newcommand*\pkg[1]{\textsf{#1}}
 \newcommand*\key[1]{\texttt{#1}}
@@ -153,6 +153,10 @@ expected page (\texttt{TPF-RESULT OK}).
 \section{History}
 
 \begin{description}
+\item[v1.1 (2026/11/14)] With \pkg{hyperref}, a \cs{footnotetext}
+  after a box for a \cs{footnotemark} in the box gets the anchor of its
+  mark: the mark and the anchor of the last footnote are restored after
+  the footnotes of the box are put.
 \item[v1.0 (2026/10/25)] First public release.
 \end{description}
 

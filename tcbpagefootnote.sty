@@ -41,7 +41,7 @@
 %%
 \RequirePackage{expl3}
 \ProvidesExplPackage{tcbpagefootnote}
-  {2026/10/25}{1.0}{Page footnotes from inside tcolorbox}
+  {2026/11/14}{1.1}{Page footnotes from inside tcolorbox}
 
 \RequirePackage{tcolorbox}
 \tcbuselibrary{hooks}
@@ -49,6 +49,9 @@
 %% The footnotes collected inside the box(es), output after the box
 \tl_new:N \g__tcbpagefootnote_notes_tl
 \tl_new:N \l__tcbpagefootnote_notes_tl
+%% The mark and the anchor of the last mark, kept while the texts are put
+\tl_new:N \l__tcbpagefootnote_mark_tl
+\tl_new:N \l__tcbpagefootnote_href_tl
 
 %% -----------------------------------------------------------------
 %% Messages
@@ -118,6 +121,9 @@
 %%    right after the box.  The list is cleared before its content is
 %%    used: a box with "page footnote" inside another one collects its
 %%    footnotes again into the list of the outer box.
+%%    The mark and, with hyperref, the anchor of the last mark are
+%%    restored afterwards: a \footnotetext after the box for a
+%%    \footnotemark in it uses them.
 %% -----------------------------------------------------------------
 \cs_new_protected:Npn \__tcbpagefootnote_flush:
   {
@@ -131,7 +137,19 @@
               { \msg_warning:nn { tcbpagefootnote } { broken } }
           }
       }
+    \tl_set_eq:NN \l__tcbpagefootnote_mark_tl \@thefnmark
+    \cs_if_exist:NT \Hy@footnote@currentHref
+      {
+        \tl_set_eq:NN \l__tcbpagefootnote_href_tl
+          \Hy@footnote@currentHref
+      }
     \tl_use:N \l__tcbpagefootnote_notes_tl
+    \tl_gset_eq:NN \@thefnmark \l__tcbpagefootnote_mark_tl
+    \cs_if_exist:NT \Hy@footnote@currentHref
+      {
+        \tl_gset_eq:NN \Hy@footnote@currentHref
+          \l__tcbpagefootnote_href_tl
+      }
   }
 
 %% -----------------------------------------------------------------
