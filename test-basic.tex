@@ -14,6 +14,8 @@
 %%   * footnotes in the body text, and in the title, upper and lower
 %%     part of a box, several in one box;
 %%   * \footnote[<num>], \footnotemark + \footnotetext in a box;
+%%   * \footnotemark in a box + \footnotetext after the box (with
+%%     hyperref: the text gets the anchor of its mark);
 %%   * a box with "page footnote" inside another one, and an ordinary
 %%     box (a footnote of the box) inside a box with "page footnote";
 %%   * an ordinary box for comparison;
@@ -55,6 +57,13 @@ Optional argument\footnote[9]{\TPFtext{opt}{page}A footnote numbered
 9.}\TPFmark{opt}, and footnotemark\footnotemark\TPFmark{fm}.
 \footnotetext{\TPFtext{fm}{page}The text for the footnotemark.}
 \end{tcolorbox}
+
+\begin{tcolorbox}[page footnote]
+A footnote\TPFfootnote{A footnote before a footnotemark.} and
+a footnotemark\footnotemark\TPFmark{fmout} whose text is outside the box.
+\end{tcolorbox}
+\footnotetext{\TPFtext{fmout}{page}The text for the footnotemark,
+  after the box.}
 
 Body text after the box\TPFfootnote{The numbering goes on.}.
 
@@ -103,6 +112,6 @@ This box does not fit at the bottom of the page\TPFfootnote{A footnote of
 
 Body text after the box\TPFfootnote{The last footnote.}.
 
-\TPFcounter{footnote}{15}
+\TPFcounter{footnote}{17}
 \TPFcounter{mpfootnote}{0}
 \end{document}
