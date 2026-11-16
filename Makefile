@@ -23,10 +23,16 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##  * every test compiles without errors
 ##  * TPF-RESULT OK and no TPF-* NG: every footnote text is typeset once,
 ##    with its own mark, where it is expected (see test-common.tex)
-##  * test-breakable-*: exactly one tcbpagefootnote warning;
+##  * test-*breakable-*: exactly one tcbpagefootnote warning;
 ##    the others: none
-##  * test-hyperref-*: no warning on a duplicate or missing destination
-##    in the log or in the output of the engine and (x)dvipdfmx
+##  * test-*hyperref-*: no warning on a duplicate or missing destination
+##    in the log or in the output of the engine and (x)dvipdfmx (the
+##    info "mathml file ... does not exist" of tagging is ignored)
+##  * test-tagging-*: run twice with \DocumentMetadata{tagging=on}; with
+##    pdflatex, xelatex and lualatex, test-tagging.lua finds every
+##    footnote (FENote) right after its mark (Lbl) in the structure
+##    tree, except the two \footnotemark of test-basic.tex (not for
+##    test-tagging-japanese-*: the marks of ltjbook are not tagged as Lbl)
 ##  * test-errors-*: the expected error message
 ## A test is "<engine>:<jobname>:<input>".  The output of the engine and
 ## of (x)dvipdfmx is kept in <jobname>.term.
@@ -49,7 +55,17 @@ TESTS := \
   uplatex:test-breakable-uplatex:'\def\CLS{ujarticle}\input test-breakable' \
   lualatex:test-japanese-lualatex:'\input test-japanese' \
   platex:test-japanese-platex:'\def\CLS{jbook}\input test-japanese' \
-  uplatex:test-japanese-uplatex:'\def\CLS{ujbook}\input test-japanese'
+  uplatex:test-japanese-uplatex:'\def\CLS{ujbook}\input test-japanese' \
+  pdflatex:test-tagging-pdflatex:'\input test-tagging' \
+  xelatex:test-tagging-xelatex:'\input test-tagging' \
+  lualatex:test-tagging-lualatex:'\input test-tagging' \
+  platex:test-tagging-platex:'\def\CLS{jarticle}\input test-tagging' \
+  uplatex:test-tagging-uplatex:'\def\CLS{ujarticle}\input test-tagging' \
+  pdflatex:test-tagging-hyperref-pdflatex:'\def\TPFhyperref{1}\input test-tagging' \
+  lualatex:test-tagging-hyperref-lualatex:'\def\TPFhyperref{1}\input test-tagging' \
+  pdflatex:test-tagging-breakable-pdflatex:'\def\TPFfile{test-breakable}\input test-tagging' \
+  lualatex:test-tagging-breakable-lualatex:'\def\TPFfile{test-breakable}\input test-tagging' \
+  lualatex:test-tagging-japanese-lualatex:'\def\TPFfile{test-japanese}\input test-tagging'
 
 ## "<case>:<error message>" of test-errors.tex (pdflatex)
 ERRORS := \
@@ -66,6 +82,9 @@ test:
 	  rm -f $$job.aux $$job.dvi $$job.xdv; \
 	  opt=; if [ $$eng = xelatex ]; then opt=-no-pdf; fi; \
 	  $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true; \
+	  case $$job in test-tagging-*) \
+	    $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true;; \
+	  esac; \
 	  if [ -f $$job.dvi ]; then dvipdfmx $$job.dvi >>$$job.term 2>&1; fi; \
 	  if [ -f $$job.xdv ]; then xdvipdfmx $$job.xdv >>$$job.term 2>&1; fi; \
 	  if grep -q '^!' $$job.log; then echo "NG: error in $$job.log"; exit 1; fi; \
@@ -73,13 +92,20 @@ test:
 	  grep -q '^TPF-RESULT OK' $$job.log || \
 	    { echo "NG: no TPF-RESULT OK in $$job.log"; exit 1; }; \
 	  nwarn=`grep -c 'tcbpagefootnote Warning' $$job.log || true`; \
-	  case $$job in test-breakable-*) want=1;; *) want=0;; esac; \
+	  case $$job in test-*breakable-*) want=1;; *) want=0;; esac; \
 	  [ $$nwarn -eq $$want ] || \
 	    { echo "NG: $$nwarn tcbpagefootnote warning(s) in $$job.log, want $$want"; exit 1; }; \
-	  case $$job in test-hyperref-*) \
+	  case $$job in test-*hyperref-*) \
 	    if cat $$job.log $$job.term | \
-	      grep -i 'duplicate\|already defined\|does not exist\|unreferenced destination'; then \
+	      grep -i 'duplicate\|already defined\|does not exist\|unreferenced destination' | \
+	      grep -v 'mathml file'; then \
 	      echo "NG: destination warning in $$job.log or $$job.term"; exit 1; fi;; \
+	  esac; \
+	  case $$job in test-tagging-*platex|test-tagging-japanese-*) ;; test-tagging-*) \
+	    tags=`texlua test-tagging.lua $$job.pdf`; echo "$$tags" >>$$job.term; \
+	    case $$job in test-tagging-breakable-*) want=0;; *) want=2;; esac; \
+	    echo "$$tags" | grep -q "^TPF-TAGS: [1-9][0-9]* paired, $$want unpaired" || \
+	      { echo "$$tags"; echo "NG: want $$want unpaired footnote mark(s) in $$job.pdf"; exit 1; };; \
 	  esac; \
 	done; \
 	for e in $(ERRORS); do \

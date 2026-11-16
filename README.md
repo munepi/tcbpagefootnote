@@ -11,6 +11,8 @@ The tcbpagefootnote package adds the tcolorbox key `page footnote`. With it, the
 
 `\footnote[<number>]`, `\footnotemark` with `\footnotetext`, `\tcbox`, and boxes with `page footnote` inside each other work as usual. With hyperref, each footnote mark links to its own footnote text.
 
+**Tagged PDF.** With the new footnote code of LaTeX (loaded e.g. by `\DocumentMetadata{tagging=on}`), the footnote text is typeset where its mark is, as in a minipage, and the typeset text is put into the footnote insertion after the box. In the structure tree, the footnote (`FENote`) then directly follows its mark (`Lbl`), as for a footnote in the body text ([latex3/tagging-project#1709](https://github.com/latex3/tagging-project/issues/1709)).
+
 * **Supported formats/engines:** pdfLaTeX, XeLaTeX, LuaLaTeX (with or without LuaTeX-ja), pLaTeX, upLaTeX (+ dvipdfmx)
 
 ## Files
@@ -56,8 +58,9 @@ Copy `tcbpagefootnote.sty` to your local TeX tree:
 `make test` compiles every test with pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and upLaTeX (+ dvipdfmx), and checks the log:
 
 * `TPF-RESULT OK`: every footnote text is typeset exactly once, with its own mark, on the expected page, as a page footnote or as a footnote of the box (recorded at shipout to the `.aux` file and checked when it is read back at `\end{document}`; see `test-common.tex`).
-* `test-hyperref`: no warning on a duplicate or missing destination in the log or in the output of the engine and (x)dvipdfmx.
-* `test-breakable`: exactly one tcbpagefootnote warning; the other tests: none.
+* `test-hyperref`, `test-tagging-hyperref`: no warning on a duplicate or missing destination in the log or in the output of the engine and (x)dvipdfmx.
+* `test-breakable`, `test-tagging-breakable`: exactly one tcbpagefootnote warning; the other tests: none.
+* `test-tagging` (pdflatex, xelatex, lualatex): `test-tagging.lua` reads the structure tree with `show-pdf-tags` and finds every `FENote` right after its `Lbl`, except the two `\footnotemark` whose texts are given later by `\footnotetext`.
 * `test-errors`: the expected error message.
 
 | Test | Engines | What it covers |
@@ -66,9 +69,10 @@ Copy `tcbpagefootnote.sty` to your local TeX tree:
 | `test-hyperref.tex` | pdflatex, xelatex, lualatex, platex, uplatex | `test-basic.tex` with hyperref |
 | `test-breakable.tex` | pdflatex, xelatex, lualatex, platex, uplatex | a broken box (footnotes on the last page, warning), an unbroken breakable box, an unbreakable box after a broken one |
 | `test-japanese.tex` | lualatex (ltjbook), platex (jbook), uplatex (ujbook) | a Japanese document |
+| `test-tagging.tex` | pdflatex, xelatex, lualatex, platex, uplatex | `test-basic.tex` (and `test-breakable.tex`, `test-japanese.tex`, with hyperref) with `\DocumentMetadata{tagging=on}`; pLaTeX and upLaTeX do not write a structure tree, so only the log is checked |
 | `test-errors.tex` | pdflatex | the error messages (`float`, `after`, key already defined) |
 
-`test-common.tex` holds the helpers shared by the tests.
+`test-common.tex` holds the helpers shared by the tests, and `test-tagging.lua` the check of the structure tree.
 
 ## Repository
 

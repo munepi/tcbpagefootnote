@@ -1,0 +1,25 @@
+%% test-tagging.tex
+%% ================
+%% A test file run with \DocumentMetadata{tagging=on}: the footnote
+%% texts are typeset where their marks are and output after the box, so
+%% that in the structure tree each footnote (FENote) directly follows
+%% its mark (Lbl), as for \footnote in the body text.
+%%
+%%   pdflatex test-tagging.tex   (or xelatex / lualatex)
+%%   platex  -jobname=test-tagging "\def\CLS{jarticle}\input test-tagging"
+%%   (then dvipdfmx test-tagging)
+%%   texlua test-tagging.lua test-tagging.pdf
+%% The file to run is test-basic.tex by default; set \TPFfile for another
+%% one (test-breakable, test-japanese, ...), and \TPFhyperref for
+%% test-basic.tex with hyperref.
+%%
+%% What to check:
+%%   * the same as for the file that is run;
+%%   * test-tagging.lua: every footnote mark is paired with its FENote,
+%%     except the two \footnotemark of test-basic.tex whose texts are
+%%     given later by \footnotetext.
+%% pLaTeX and upLaTeX do not write a structure tree; only the first
+%% point is checked with them.
+\DocumentMetadata{tagging=on}
+\ifdefined\TPFfile\else\def\TPFfile{test-basic}\fi
+\input{\TPFfile}

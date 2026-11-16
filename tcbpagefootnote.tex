@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tcbpagefootnote}
 \usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
-\newcommand*\tpfversion{v1.1 (2026/11/14)}
+\newcommand*\tpfversion{v1.2 (2026/11/16)}
 \newcommand*\cs[1]{\texttt{\char`\\#1}}
 \newcommand*\pkg[1]{\textsf{#1}}
 \newcommand*\key[1]{\texttt{#1}}
@@ -86,6 +86,16 @@ each other work as usual.  An ordinary box inside a box with
 \key{page footnote} keeps its own footnotes.  With \pkg{hyperref}, each
 footnote mark links to its own footnote text.
 
+\paragraph{Tagged PDF}
+With the new footnote code of \LaTeX{} (loaded, e.g., by
+\verb|\DocumentMetadata{tagging=on}|), the footnote text is typeset
+where its mark is, as in a \texttt{minipage}, and the typeset text is
+put into the footnote insertion after the box.  In the structure tree,
+the footnote (\texttt{FENote}) then directly follows its mark
+(\texttt{Lbl}), as for a footnote in the body text.  The text is set in
+the \cs{columnwidth} outside the box and in the normal color, not in the
+text color of the box.
+
 \section{Errors and warnings}
 
 \begin{description}
@@ -145,6 +155,11 @@ expected page (\texttt{TPF-RESULT OK}).
                                 the warning\\
   \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
                                 ujbook)\\
+  \texttt{test-tagging.tex}   & the tests above with
+                                \verb|\DocumentMetadata{tagging=on}|;
+                                \texttt{test-tagging.lua} checks\\
+                              & that each \texttt{FENote} follows its
+                                \texttt{Lbl} in the structure tree\\
   \texttt{test-errors.tex}    & the error messages\\
   \hline
 \end{tabular}
@@ -153,6 +168,10 @@ expected page (\texttt{TPF-RESULT OK}).
 \section{History}
 
 \begin{description}
+\item[v1.2 (2026/11/16)] Tagged PDF: with the new footnote code of
+  \LaTeX, the footnote text is typeset at its mark and output after the
+  box, so that its \texttt{FENote} follows the \texttt{Lbl} of its mark
+  (\href{https://github.com/latex3/tagging-project/issues/1709}{latex3/tagging-project\#1709}).
 \item[v1.1 (2026/11/14)] With \pkg{hyperref}, a \cs{footnotetext}
   after a box for a \cs{footnotemark} in the box gets the anchor of its
   mark: the mark and the anchor of the last footnote are restored after

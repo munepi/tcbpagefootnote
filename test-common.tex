@@ -53,10 +53,14 @@
 \cs_new:Npn \__tpf_frozen_mark:
   { \exp_not:N \exp_not:n { \exp_not:o { \@thefnmark } } }
 %% hyperref: the anchor of the mark, and the anchor at the text
-%% (hyperref sets \@currentHref to the anchor it puts there)
+%% (hyperref sets \@currentHref to the anchor it puts there).
+%% Not with the new footnote code of LaTeX (latex-lab-footnotes), which
+%% makes the links itself and does not use \Hy@footnote@currentHref.
 \cs_new:Npn \__tpf_frozen_href:N #1
   {
-    \cs_if_exist:NT \Hy@footnote@currentHref
+    \bool_lazy_and:nnT
+      { \cs_if_exist_p:N \Hy@footnote@currentHref }
+      { ! \cs_if_exist_p:N \fnote_footnotetext:n }
       { \exp_not:N \exp_not:n { \exp_not:o {#1} } }
   }
 
