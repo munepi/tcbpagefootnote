@@ -36,16 +36,20 @@
 %%   * A breakable box that is broken across pages puts all its footnote
 %%     texts on the page where the box ends; a warning is issued.
 %%   * "page footnote" cannot be used with "float".
-%%   * Keys that set the "after" code (after, after skip, nobeforeafter,
-%%     ...) must come before "page footnote" in the option list.
-%%   * Vertical writing (tate) is out of the scope of this version.
+%%   * Keys that set the "after" code (such as after, after skip and
+%%     nobeforeafter) must come before "page footnote" in the option list.
+%%   * With pLaTeX and upLaTeX in tate, a \footnotetext in vertical mode
+%%     does not work with the new footnote code of LaTeX (independent
+%%     of this package).
 %%
 %% Supported formats/engines: pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and
-%% upLaTeX (+ dvipdfmx).
+%% upLaTeX (+ dvipdfmx), in yoko and in tate.  In tate with pLaTeX and
+%% upLaTeX, the document has to load the pxpgftate package: without
+%% it, tcolorbox draws its boxes sideways.
 %%
 \RequirePackage{expl3}
 \ProvidesExplPackage{tcbpagefootnote}
-  {2026/11/16}{1.2}{Page footnotes from inside tcolorbox}
+  {2026/11/17}{1.3}{Page footnotes from inside tcolorbox}
 
 \RequirePackage{tcolorbox}
 \tcbuselibrary{hooks}
@@ -169,8 +173,8 @@
 %%    into \footins, into the box of an outer box with "page footnote"
 %%    or into \@mpfootins of an outer ordinary box.
 %%    The text is set in the \columnwidth and \textwidth outside the
-%%    box, saved when a box starts (\tcb@layer@inc) unless it is
-%%    directly inside a box with "page footnote".  The color is reset:
+%%    box, saved when a box starts (\tcb@layer@inc) unless the
+%%    enclosing box has "page footnote".  The color is reset:
 %%    the material would otherwise carry the text color of the box.
 %%    \nobreak keeps the color special from being a place where the
 %%    insertion can be split before its first line.

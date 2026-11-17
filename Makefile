@@ -33,6 +33,8 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##    footnote (FENote) right after its mark (Lbl) in the structure
 ##    tree, except the two \footnotemark of test-basic.tex (not for
 ##    test-tagging-japanese-*: the marks of ltjbook are not tagged as Lbl)
+##  * test-tate-*: vertical writing (tarticle, utarticle, ltjtarticle);
+##    the same checks as in yoko
 ##  * test-errors-*: the expected error message
 ## A test is "<engine>:<jobname>:<input>".  The output of the engine and
 ## of (x)dvipdfmx is kept in <jobname>.term.
@@ -65,7 +67,13 @@ TESTS := \
   lualatex:test-tagging-hyperref-lualatex:'\def\TPFhyperref{1}\input test-tagging' \
   pdflatex:test-tagging-breakable-pdflatex:'\def\TPFfile{test-breakable}\input test-tagging' \
   lualatex:test-tagging-breakable-lualatex:'\def\TPFfile{test-breakable}\input test-tagging' \
-  lualatex:test-tagging-japanese-lualatex:'\def\TPFfile{test-japanese}\input test-tagging'
+  lualatex:test-tagging-japanese-lualatex:'\def\TPFfile{test-japanese}\input test-tagging' \
+  platex:test-tate-platex:'\input test-tate' \
+  uplatex:test-tate-uplatex:'\def\CLS{utarticle}\input test-tate' \
+  lualatex:test-tate-lualatex:'\input test-tate' \
+  platex:test-tate-breakable-platex:'\def\TPFfile{test-breakable}\input test-tate' \
+  uplatex:test-tate-breakable-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-breakable}\input test-tate' \
+  lualatex:test-tate-breakable-lualatex:'\def\TPFfile{test-breakable}\input test-tate'
 
 ## "<case>:<error message>" of test-errors.tex (pdflatex)
 ERRORS := \

@@ -24,7 +24,9 @@ puts its footnote texts on the page where the box ends, with a warning.
 <p>
 Supported formats/engines: <code>pdflatex</code>, <code>xelatex</code>,
 <code>lualatex</code>, <code>platex</code>, <code>uplatex</code>
-(with <code>dvipdfmx</code>).
+(with <code>dvipdfmx</code>), in horizontal and vertical writing (with
+pLaTeX and upLaTeX in vertical writing, load the pxpgftate package as
+well).
 </p>
 '''
 author      = ["Munehiro Yamamoto"]

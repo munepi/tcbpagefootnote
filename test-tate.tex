@@ -1,0 +1,28 @@
+%% test-tate.tex
+%% =============
+%% A test file run in vertical writing (tate), with the tate classes:
+%% the footnotes of the boxes with "page footnote" are page footnotes,
+%% as in yoko.
+%%
+%%   platex  test-tate.tex && dvipdfmx test-tate
+%%   uplatex -jobname=test-tate "\def\CLS{utarticle}\input test-tate"
+%%   lualatex test-tate.tex
+%% The class is tarticle with pTeX and ltjtarticle otherwise; set \CLS
+%% for another one.  With pTeX, the pxpgftate package is loaded, as a
+%% document in tate has to do: without it, PGF draws the boxes of
+%% tcolorbox sideways.  The file to run is test-basic.tex by default;
+%% set \TPFfile for another one (test-breakable, ...).
+%%
+%% What to check:
+%%   * the same as for the file that is run.
+%% Not run with \DocumentMetadata: with pLaTeX and upLaTeX in tate, a
+%% \footnotetext in vertical mode does not work with the new footnote
+%% code of LaTeX, with or without this package (TeX Live 2026).
+\ifdefined\ptexversion
+  \ifdefined\CLS\else\def\CLS{tarticle}\fi
+  \AddToHook{package/tcbpagefootnote/after}{\RequirePackage{pxpgftate}}
+\else
+  \ifdefined\CLS\else\def\CLS{ltjtarticle}\fi
+\fi
+\ifdefined\TPFfile\else\def\TPFfile{test-basic}\fi
+\input{\TPFfile}
