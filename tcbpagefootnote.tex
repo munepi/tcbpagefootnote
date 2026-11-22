@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tcbpagefootnote}
 \usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
-\newcommand*\tpfversion{v1.3 (2026/11/17)}
+\newcommand*\tpfversion{v1.4 (2026/11/22)}
 \newcommand*\cs[1]{\texttt{\char`\\#1}}
 \newcommand*\pkg[1]{\textsf{#1}}
 \newcommand*\key[1]{\texttt{#1}}
@@ -54,7 +54,8 @@ along with the footnotes of the body text.
 pdf\LaTeX, Xe\LaTeX, Lua\LaTeX{} (with or without Lua\TeX-ja),
 p\LaTeX{} and up\LaTeX{} (with dvipdfmx); horizontal (yoko) and
 vertical (tate) writing.  The package requires \pkg{tcolorbox} and
-loads its \texttt{hooks} library.
+loads its \texttt{hooks} library.  With Lua\LaTeX, it also loads
+\texttt{tcbpagefootnote.lua}.
 
 \section{Usage}
 
@@ -86,6 +87,17 @@ part of the box:
 each other work as usual.  An ordinary box inside a box with
 \key{page footnote} keeps its own footnotes.  With \pkg{hyperref}, each
 footnote mark links to its own footnote text.
+
+\paragraph{Breakable boxes}
+With Lua\LaTeX, a \key{breakable} box that is broken across pages puts
+each footnote text on the page of its mark, like the body text does.
+The footnote texts of such a box are real insertions at their marks;
+when \pkg{tcolorbox} splits the content of the box, each part keeps the
+insertions of its marks, and \pkg{tcbpagefootnote} moves them out of
+the part to its page.  A part leaves room for its footnotes: the
+content is split as if each line with a footnote mark were as much
+higher as its footnote text needs at the bottom of the page.  With the
+other engines, see Section~\ref{sec:limitations}.
 
 \paragraph{Tagged PDF}
 With the new footnote code of \LaTeX{} (loaded, e.g., by
@@ -125,18 +137,27 @@ TikZ/PGF, and so \pkg{tcolorbox}, draws the boxes sideways in tate.
 \item[\texttt{The tcolorbox key 'page footnote' is already defined.}]
   Another package defines a key of the same name; \pkg{tcbpagefootnote}
   does not redefine it.
-\item[\texttt{This box is broken across pages.} (warning)] See below.
+\item[\texttt{This box is broken across pages.} (warning)] See below;
+  not with Lua\LaTeX, except in \texttt{multicols}.
 \end{description}
 
 \section{Limitations}
+\label{sec:limitations}
 
 \begin{itemize}
-\item A \key{breakable} box that is broken across pages puts the
-  footnote texts of all its parts on the page where the box ends: the
-  content of a breakable box is typeset as a whole before it is split,
-  and footnote insertions do not travel with the split parts.  The
-  package issues a warning for such a box when it has footnotes.  The
-  footnotes of a breakable box that is not broken are put as usual.
+\item With an engine other than Lua\TeX, a \key{breakable} box that is
+  broken across pages puts the footnote texts of all its parts on the
+  page where the box ends: the content of a breakable box is typeset as
+  a whole before it is split, and only Lua\TeX{} can take the footnote
+  insertions out of the split parts.  The package issues a warning for
+  such a box when it has footnotes.  The footnotes of a breakable box
+  that is not broken are put as usual.  This also holds for Lua\LaTeX{}
+  in a \texttt{multicols} environment, where the footnotes are below
+  all the columns.
+\item With Lua\LaTeX, the part of a broken box on a page that has no
+  footnote before the box can be up to \cs{skip}\cs{footins} (the
+  space above the footnotes) shorter than without \key{page footnote},
+  when the part has no footnote but the rest of the box has one.
 \item \key{page footnote} cannot be used with \key{float}.
 \item With p\LaTeX{} and up\LaTeX{} in tate, a \cs{footnotetext} in
   vertical mode (e.g.\ right after a box) does not work with the new
@@ -167,6 +188,8 @@ expected page (\texttt{TPF-RESULT OK}).
                                 \pkg{hyperref}: no duplicate anchors\\
   \texttt{test-breakable.tex} & broken and unbroken breakable boxes,
                                 the warning\\
+  \texttt{test-breakable-lua.tex} & Lua\LaTeX: boxes that \TeX{} breaks
+                                across several pages\\
   \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
                                 ujbook)\\
   \texttt{test-tagging.tex}   & the tests above with
@@ -174,8 +197,8 @@ expected page (\texttt{TPF-RESULT OK}).
                                 \texttt{test-tagging.lua} checks\\
                               & that each \texttt{FENote} follows its
                                 \texttt{Lbl} in the structure tree\\
-  \texttt{test-tate.tex}      & \texttt{test-basic.tex} and
-                                \texttt{test-breakable.tex} in tate\\
+  \texttt{test-tate.tex}      & \texttt{test-basic.tex} and the
+                                breakable tests in tate\\
                               & (tarticle, utarticle, ltjtarticle)\\
   \texttt{test-errors.tex}    & the error messages\\
   \hline
@@ -185,6 +208,9 @@ expected page (\texttt{TPF-RESULT OK}).
 \section{History}
 
 \begin{description}
+\item[v1.4 (2026/11/22)] With Lua\LaTeX, a \key{breakable} box that is
+  broken across pages puts each footnote text on the page of its mark
+  (new file \texttt{tcbpagefootnote.lua}).
 \item[v1.3 (2026/11/17)] Vertical writing: \key{page footnote} is
   tested in tate with p\LaTeX{}, up\LaTeX{} (with \pkg{pxpgftate}) and
   Lua\TeX-ja.  The code of the package is unchanged.

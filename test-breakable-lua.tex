@@ -1,0 +1,94 @@
+%% test-breakable-lua.tex
+%% ======================
+%% Typesetting test for LuaLaTeX: breakable boxes with "page footnote"
+%% that TeX breaks across pages (no \tcbbreak).
+%%
+%%   lualatex test-breakable-lua.tex
+%% The class is article by default; set \CLS for another one.
+%%
+%% What is covered:
+%%   * a box that starts in the middle of a page and is broken across
+%%     several pages, with footnotes of one and of several lines in its
+%%     title, in every part of its upper part and in its lower part;
+%%   * a box with its only footnote in its last part;
+%%   * a box with "height fixed for=first and middle": its parts fill
+%%     the pages down to their footnotes;
+%%   * a box with "page footnote" and an ordinary box inside a broken
+%%     box.
+%%
+%% What to check:
+%%   * TPF-RESULT OK (every footnote text is on the page of its mark),
+%%     TPF-COUNTER OK, and no error or warning;
+%%   * no "Overfull \vbox" and no "% split" (of \tracingpages: TeX had
+%%     to split a footnote) in the log: the parts leave room for their
+%%     footnotes;
+%%   * more than six pages (the boxes are broken).
+\ifdefined\CLS\else\def\CLS{article}\fi
+\documentclass{\CLS}
+\usepackage{tcbpagefootnote}
+\tcbuselibrary{breakable}
+\ifdefined\TPFhyperref\usepackage{hyperref}\fi
+\input{test-common}
+%% \TPFchunk{<n>}: <n> paragraphs, each followed by a line with a
+%% footnote; every third footnote has several lines
+\ExplSyntaxOn
+\NewDocumentCommand \TPFchunk { m }
+  {
+    \int_step_inline:nn {#1}
+      {
+        \TPFfiller { 12 }
+        \int_compare:nNnTF { \int_mod:nn {##1} { 3 } } = { 0 }
+          { \TPFlongnote } { \TPFshortnote }
+      }
+  }
+\ExplSyntaxOff
+\newcommand\TPFshortnote{%
+  A line with a footnote\TPFfootnote{A footnote of one line.}.\par}
+\newcommand\TPFlongnote{%
+  A line with a footnote\TPFfootnote{A footnote of several lines.
+    This is a filler sentence of plain English text for the test.
+    This is a filler sentence of plain English text for the test.
+    This is a filler sentence of plain English text for the test.}.\par}
+\begin{document}
+\tracingpages=1
+\section*{Breakable boxes broken by TeX}
+
+\TPFfiller{20}
+Body text\TPFfootnote{A footnote in the body text before the box.}.
+
+\begin{tcolorbox}[breakable, page footnote,
+  title={A long box\TPFfootnote{A footnote of the title.}}]
+\TPFchunk{12}
+\tcblower
+\TPFchunk{6}
+\end{tcolorbox}
+
+Body text\TPFfootnote{A footnote in the body text after the box.}.
+
+\begin{tcolorbox}[breakable, page footnote]
+\TPFfiller{90}
+The only footnote of this box\TPFfootnote{A footnote of the last part.}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[breakable, page footnote, height fixed for=first and middle]
+\TPFchunk{9}
+\end{tcolorbox}
+
+\begin{tcolorbox}[breakable, page footnote]
+\TPFchunk{2}
+\begin{tcolorbox}[page footnote]
+A box inside the broken box\TPFfootnote{A footnote of the box inside.}.
+\end{tcolorbox}
+\TPFchunk{2}
+\begin{tcolorbox}
+An ordinary box inside the broken box\TPFfootnote[box]{A footnote of the
+  ordinary box inside.}.
+\end{tcolorbox}
+\TPFchunk{2}
+\end{tcolorbox}
+
+\TPFcounter{footnote}{38}
+\ifnum\value{page}>6 \else
+  \typeout{TPF-PAGES NG: the boxes are not broken}%
+\fi
+\end{document}

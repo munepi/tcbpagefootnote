@@ -7,21 +7,27 @@
 %%   uplatex -jobname=test-breakable "\def\CLS{ujarticle}\input test-breakable"
 %%
 %% What is covered:
-%%   * a box broken across pages by \tcbbreak: the footnote texts of
-%%     all its parts are put on the page where the box ends, and the
-%%     package warns once;
+%%   * a box broken across pages by \tcbbreak, with footnotes in its
+%%     title, in both parts of its upper part and in its lower part.
+%%     With LuaLaTeX, each footnote text is on the page of its mark and
+%%     the package does not warn.  With the other engines, the footnote
+%%     texts of all the parts are put on the page where the box ends,
+%%     and the package warns once;
 %%   * a breakable box that is not broken, and an unbreakable box after
 %%     the broken one: no warning.
 %%
 %% What to check:
-%%   * TPF-RESULT OK, and exactly one tcbpagefootnote warning
-%%     ("This box is broken across pages").
+%%   * TPF-RESULT OK, and no tcbpagefootnote warning with LuaLaTeX,
+%%     exactly one ("This box is broken across pages") with the other
+%%     engines.
 \ifdefined\CLS\else\def\CLS{article}\fi
 \ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
 \expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
 \usepackage{tcbpagefootnote}
 \tcbuselibrary{breakable}
 \input{test-common}
+%% Where the text of a footnote in the first part of a broken box is
+\ifdefined\directlua\def\TPFbroken{page}\else\def\TPFbroken{later}\fi
 \begin{document}
 \section*{Breakable boxes}
 
@@ -30,11 +36,14 @@ A breakable box that is not broken\TPFfootnote{A footnote of the
   unbroken box.}.
 \end{tcolorbox}
 
-\begin{tcolorbox}[breakable, page footnote]
-The first part of a broken box\TPFfootnote[later]{A footnote of the
+\begin{tcolorbox}[breakable, page footnote,
+  title={A broken box\TPFfootnote[\TPFbroken]{A footnote of the title.}}]
+The first part of a broken box\TPFfootnote[\TPFbroken]{A footnote of the
   first part.}.
 \tcbbreak
 The second part of the box\TPFfootnote{A footnote of the second part.}.
+\tcblower
+The lower part of the box\TPFfootnote{A footnote of the lower part.}.
 \end{tcolorbox}
 
 \begin{tcolorbox}[page footnote]
@@ -42,5 +51,5 @@ An unbreakable box after the broken one\TPFfootnote{A footnote of the
   unbreakable box.}.
 \end{tcolorbox}
 
-\TPFcounter{footnote}{4}
+\TPFcounter{footnote}{6}
 \end{document}

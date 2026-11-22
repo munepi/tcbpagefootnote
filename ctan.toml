@@ -18,8 +18,10 @@ of the page where the box is.
 <p>
 Nested boxes, <code>\footnotemark</code>/<code>\footnotetext</code>,
 <code>\tcbox</code> and hyperref (each footnote text keeps the anchor
-of its own mark) are supported.  A breakable box broken across pages
-puts its footnote texts on the page where the box ends, with a warning.
+of its own mark) are supported.  With LuaLaTeX, a breakable box
+broken across pages puts each footnote text on the page of its mark;
+with the other engines, it puts its footnote texts on the page where
+the box ends, with a warning.
 </p>
 <p>
 Supported formats/engines: <code>pdflatex</code>, <code>xelatex</code>,
