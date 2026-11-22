@@ -107,6 +107,13 @@ way that depends on the engine.
 \end{itemize}
 See also Section~\ref{sec:limitations}.
 
+\paragraph{Breakable boxes inside breakable boxes}
+\pkg{tcolorbox} does not break a box inside another box.  With the
+\pkg{tcbnestbreak} package it does: a \key{breakable} box inside a
+\key{breakable} box is broken together with the outer box.  If both
+boxes have \key{page footnote}, the footnotes of the inner box are put
+on the pages of their marks as well.
+
 \paragraph{Tagged PDF}
 With the new footnote code of \LaTeX{} (loaded, e.g., by
 \verb|\DocumentMetadata{tagging=on}|), the footnote text is typeset
@@ -202,6 +209,8 @@ expected page (\texttt{TPF-RESULT OK}).
                                 the warning\\
   \texttt{test-breakable-long.tex} & boxes that \TeX{} breaks across
                                 several pages\\
+  \texttt{test-nested.tex}    & with \pkg{tcbnestbreak}: breakable
+                                boxes inside a breakable box\\
   \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
                                 ujbook)\\
   \texttt{test-tagging.tex}   & the tests above with
@@ -223,7 +232,9 @@ expected page (\texttt{TPF-RESULT OK}).
 \item[v1.4 (2026/11/22)] A \key{breakable} box that is broken across
   pages puts each footnote text on the page of its mark: with
   Lua\LaTeX{} through the new file \texttt{tcbpagefootnote.lua}, with
-  the other engines through \cs{marks}.
+  the other engines through \cs{marks}.  With the
+  \pkg{tcbnestbreak} package, this also holds for a breakable box with
+  \key{page footnote} inside such a box.
 \item[v1.3 (2026/11/17)] Vertical writing: \key{page footnote} is
   tested in tate with p\LaTeX{}, up\LaTeX{} (with \pkg{pxpgftate}) and
   Lua\TeX-ja.  The code of the package is unchanged.

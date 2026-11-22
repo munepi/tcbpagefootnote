@@ -1,0 +1,86 @@
+%% test-nested.tex
+%% ===============
+%% Typesetting test with the tcbnestbreak package: breakable boxes with
+%% "page footnote" inside a breakable box with "page footnote".
+%%
+%%   pdflatex test-nested.tex   (or xelatex / lualatex)
+%%   platex  test-nested.tex && dvipdfmx test-nested
+%%   uplatex -jobname=test-nested "\def\CLS{ujarticle}\input test-nested"
+%% The class is article by default; set \CLS for another one.  With
+%% pTeX the class option dvipdfmx is given.
+%%
+%% With tcbnestbreak, a breakable box inside a breakable box "flows":
+%% its lines are put into the list of the outer box, and it is broken
+%% together with the outer box.
+%%
+%% What is covered:
+%%   * footnotes of the outer box before, between and after the boxes
+%%     inside;
+%%   * a box inside with "page footnote", broken across pages, with
+%%     footnotes in its title, in its upper part and in its lower part;
+%%   * a box with "page footnote" inside that box, three levels deep;
+%%   * an unbreakable box with "page footnote" inside a box that flows;
+%%   * a box inside without the key: its footnote is a footnote of the
+%%     box.
+%%
+%% What to check:
+%%   * TPF-RESULT OK (every footnote text is on the page of its mark),
+%%     TPF-COUNTER OK, and no error or warning;
+%%   * no "Overfull \vbox" and no "% split" (of \tracingpages) in the
+%%     log.
+\ifdefined\CLS\else\def\CLS{article}\fi
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
+\usepackage{tcbpagefootnote}
+\usepackage{tcbnestbreak}
+\ifdefined\TPFhyperref\usepackage{hyperref}\fi
+\input{test-common}
+\begin{document}
+\tracingpages=1
+\section*{Breakable boxes inside a breakable box}
+
+\TPFfiller{20}
+Body text\TPFfootnote{A footnote in the body text before the box.}.
+
+\begin{tcolorbox}[breakable, page footnote, title=Outer box]
+The outer box\TPFfootnote{A footnote of the outer box.}.
+\TPFfiller{10}
+\begin{tcolorbox}[breakable, page footnote, colback=yellow!20,
+  title={Box 1\TPFfootnote{A footnote of the title of box 1.}}]
+Box 1\TPFfootnote{A footnote of box 1.}. \TPFfiller{50}
+Box 1\TPFfootnote{A second footnote of box 1, of several lines.
+  This is a filler sentence of plain English text for the test.
+  This is a filler sentence of plain English text for the test.
+  This is a filler sentence of plain English text for the test.}.
+\TPFfiller{20}
+\begin{tcolorbox}[breakable, page footnote, colback=red!10, title=Box 2]
+Box 2 in box 1\TPFfootnote{A footnote of box 2.}. \TPFfiller{60}
+Box 2 in box 1\TPFfootnote{A second footnote of box 2.}. \TPFfiller{10}
+\end{tcolorbox}
+\TPFfiller{20}
+\begin{tcolorbox}[page footnote, colback=white, title=An unbreakable box]
+An unbreakable box in box 1\TPFfootnote{A footnote of the unbreakable
+  box.}.
+\end{tcolorbox}
+\TPFfiller{10}
+\tcblower
+The lower part of box 1\TPFfootnote{A footnote of the lower part of
+  box 1.}. \TPFfiller{50}
+The lower part of box 1\TPFfootnote{A second footnote of the lower
+  part.}.
+\end{tcolorbox}
+The outer box\TPFfootnote{A footnote of the outer box between the
+  boxes.}. \TPFfiller{30}
+\begin{tcolorbox}[breakable, colback=green!10, title=Box 3]
+Box 3, without the key\TPFfootnote[box]{A footnote of box 3.}.
+\TPFfiller{4}
+\end{tcolorbox}
+The outer box\TPFfootnote{A footnote of the outer box after the
+  boxes.}.
+\end{tcolorbox}
+
+\TPFcounter{footnote}{12}
+\ifnum\value{page}>3 \else
+  \typeout{TPF-PAGES NG: the boxes are not broken}%
+\fi
+\end{document}

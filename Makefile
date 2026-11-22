@@ -2,6 +2,10 @@ TPFVER := $(shell awk '/ProvidesExplPackage\{tcbpagefootnote\}/{getline; split($
 
 DOCS := tcbpagefootnote.pdf
 
+## The tcbnestbreak package for test-nested.tex; the tests with it are
+## skipped if it is not there.
+TNB ?= ../tcbnestbreak
+
 .PHONY: ctanzip
 ctanzip: tcbpagefootnote.zip ## Archive for CTAN upload
 tcbpagefootnote.zip: clean $(DOCS)
@@ -36,6 +40,11 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##    test-tagging-japanese-*: the marks of ltjbook are not tagged as Lbl)
 ##  * test-tate-*: vertical writing (tarticle, utarticle, ltjtarticle);
 ##    the same checks as in yoko
+##  * test-*nested-* (with tcbnestbreak in $(TNB), which is put into
+##    TEXINPUTS for these tests only): breakable boxes inside a
+##    breakable box; no overfull page and no split footnote.
+##    With tagging, the footnote of the box without "page footnote" is
+##    the one unpaired mark
 ##  * test-errors-*: the expected error message
 ## A test is "<engine>:<jobname>:<input>".  The output of the engine and
 ## of (x)dvipdfmx is kept in <jobname>.term.
@@ -94,6 +103,23 @@ TESTS := \
   uplatex:test-tate-breakable-long-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-breakable-long}\input test-tate' \
   lualatex:test-tate-breakable-long-lualatex:'\def\TPFfile{test-breakable-long}\input test-tate'
 
+NESTED := \
+  pdflatex:test-nested-pdflatex:'\input test-nested' \
+  xelatex:test-nested-xelatex:'\input test-nested' \
+  lualatex:test-nested-lualatex:'\input test-nested' \
+  lualatex:test-nested-ltjsarticle-lualatex:'\def\CLS{ltjsarticle}\input test-nested' \
+  platex:test-nested-platex:'\def\CLS{jarticle}\input test-nested' \
+  uplatex:test-nested-uplatex:'\def\CLS{ujarticle}\input test-nested' \
+  pdflatex:test-hyperref-nested-pdflatex:'\def\TPFhyperref{1}\input test-nested' \
+  lualatex:test-hyperref-nested-lualatex:'\def\TPFhyperref{1}\input test-nested' \
+  pdflatex:test-tagging-nested-pdflatex:'\def\TPFfile{test-nested}\input test-tagging' \
+  lualatex:test-tagging-nested-lualatex:'\def\TPFfile{test-nested}\input test-tagging' \
+  platex:test-tate-nested-platex:'\def\TPFfile{test-nested}\input test-tate' \
+  uplatex:test-tate-nested-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-nested}\input test-tate' \
+  lualatex:test-tate-nested-lualatex:'\def\TPFfile{test-nested}\input test-tate'
+
+HASTNB := $(wildcard $(TNB)/tcbnestbreak.sty)
+
 ## "<case>:<error message>" of test-errors.tex (pdflatex)
 ERRORS := \
   float:"cannot be used with" \
@@ -103,14 +129,16 @@ ERRORS := \
 .PHONY: test
 test:
 	@set -e; \
-	for t in $(TESTS); do \
+	$(if $(HASTNB),,echo "== test-nested skipped: no $(TNB)/tcbnestbreak.sty";) \
+	for t in $(TESTS) $(if $(HASTNB),$(NESTED)); do \
 	  eng=$${t%%:*}; rest=$${t#*:}; job=$${rest%%:*}; in=$${rest#*:}; \
 	  echo "== $$eng $$job"; \
 	  rm -f $$job.aux $$job.dvi $$job.xdv; \
 	  opt=; if [ $$eng = xelatex ]; then opt=-no-pdf; fi; \
-	  $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true; \
+	  pre=; case $$job in test-*nested-*) pre="env TEXINPUTS=.:$(TNB):$$TEXINPUTS";; esac; \
+	  $$pre $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true; \
 	  case $$job in test-tagging-*) \
-	    $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true;; \
+	    $$pre $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true;; \
 	  esac; \
 	  if [ -f $$job.dvi ]; then dvipdfmx $$job.dvi >>$$job.term 2>&1; fi; \
 	  if [ -f $$job.xdv ]; then xdvipdfmx $$job.xdv >>$$job.term 2>&1; fi; \
@@ -121,7 +149,7 @@ test:
 	  nwarn=`grep -c 'tcbpagefootnote Warning' $$job.log || true`; \
 	  [ $$nwarn -eq 0 ] || \
 	    { echo "NG: $$nwarn tcbpagefootnote warning(s) in $$job.log"; exit 1; }; \
-	  case $$job in test-*breakable-long-*) \
+	  case $$job in test-*breakable-long-*|test-*nested-*) \
 	    if grep 'Overfull .vbox\|^% split' $$job.log; then \
 	      echo "NG: overfull page or split footnote in $$job.log"; exit 1; fi;; \
 	  esac; \
@@ -133,7 +161,7 @@ test:
 	  esac; \
 	  case $$job in test-tagging-*platex|test-tagging-japanese-*) ;; test-tagging-*) \
 	    tags=`texlua test-tagging.lua $$job.pdf`; echo "$$tags" >>$$job.term; \
-	    case $$job in test-tagging-breakable-*) want=0;; *) want=2;; esac; \
+	    case $$job in test-tagging-breakable-*) want=0;; test-tagging-nested-*) want=1;; *) want=2;; esac; \
 	    echo "$$tags" | grep -q "^TPF-TAGS: [1-9][0-9]* paired, $$want unpaired" || \
 	      { echo "$$tags"; echo "NG: want $$want unpaired footnote mark(s) in $$job.pdf"; exit 1; };; \
 	  esac; \

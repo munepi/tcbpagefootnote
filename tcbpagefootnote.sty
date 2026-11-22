@@ -36,6 +36,9 @@
 %%   taking their insertions out of the part (tcbpagefootnote.lua),
 %%   with the other engines by keeping each footnote text in a box and
 %%   finding the part of its mark with \marks.
+%%   With the tcbnestbreak package, a breakable box inside a breakable
+%%   box is broken as well; with "page footnote" on both, the
+%%   footnotes of the box inside are put on the pages of their marks.
 %%
 %% Limitations
 %%   * In multicols, and inside another box such as a minipage, a
@@ -388,13 +391,43 @@
 
 %% Inside the box (1.): \__tcbpagefootnote_insert_restore: of the
 %% engine instead of collecting.
+%% With the tcbnestbreak package, a breakable box inside such a box
+%% "flows": its lines are put into the list of the box around it
+%% (\l__tcbnestbreak_flow_bool).  With "page footnote", it does the
+%% same as the box around it: its footnotes are then in that list as
+%% well, and each is put on the page of its mark.
+\bool_new:N \l__tcbpagefootnote_insert_bool
 \cs_new_eq:NN \__tcbpagefootnote_insert_restore: \prg_do_nothing:
 \cs_new_eq:NN \__tcbpagefootnote_collect_restore: \__tcbpagefootnote_restore:
+\prg_new_conditional:Npnn \__tcbpagefootnote_if_flow: { p }
+  {
+    \bool_if_exist:NTF \l__tcbnestbreak_flow_bool
+      {
+        \bool_if:NTF \l__tcbnestbreak_flow_bool
+          { \prg_return_true: } { \prg_return_false: }
+      }
+      { \prg_return_false: }
+  }
 \cs_gset_protected:Npn \__tcbpagefootnote_restore:
   {
     \__tcbpagefootnote_if_insert:TF
-      { \__tcbpagefootnote_insert_restore: }
-      { \__tcbpagefootnote_collect_restore: }
+      {
+        \bool_set_true:N \l__tcbpagefootnote_insert_bool
+        \__tcbpagefootnote_insert_restore:
+      }
+      {
+        \bool_lazy_all:nTF
+          {
+            { \l__tcbpagefootnote_key_bool }
+            { \l__tcbpagefootnote_insert_bool }
+            { \__tcbpagefootnote_if_flow_p: }
+          }
+          { \__tcbpagefootnote_insert_restore: }
+          {
+            \bool_set_false:N \l__tcbpagefootnote_insert_bool
+            \__tcbpagefootnote_collect_restore:
+          }
+      }
   }
 
 %% The footnotes are put by \__tcbpagefootnote_write: of the engine

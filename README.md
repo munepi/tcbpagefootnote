@@ -13,6 +13,8 @@ The tcbpagefootnote package adds the tcolorbox key `page footnote`. With it, the
 
 **Breakable boxes.** A `breakable` box that is broken across pages puts each footnote text on the page of its mark, like the body text does, and each part of the box leaves room for its footnotes. This is done in one run, in a way that depends on the engine. With LuaLaTeX, the footnote texts are real insertions at their marks; when tcolorbox splits the content of the box, each part keeps the insertions of its marks, and tcbpagefootnote moves them out of the part to its page (`tcbpagefootnote.lua`). With the other engines, each footnote text is typeset at its mark and kept in a box, and a TeX mark (`\marks`) at the footnote mark tells which part the footnote belongs to; the content is split again, from a copy, until the part and its footnotes fit.
 
+**Breakable boxes inside breakable boxes.** tcolorbox does not break a box inside another box. With the tcbnestbreak package it does: a `breakable` box inside a `breakable` box is broken together with the outer box. If both boxes have `page footnote`, the footnotes of the inner box are put on the pages of their marks as well.
+
 **Tagged PDF.** With the new footnote code of LaTeX (loaded e.g. by `\DocumentMetadata{tagging=on}`), the footnote text is typeset where its mark is, as in a minipage, and the typeset text is put into the footnote insertion after the box. In the structure tree, the footnote (`FENote`) then directly follows its mark (`Lbl`), as for a footnote in the body text ([latex3/tagging-project#1709](https://github.com/latex3/tagging-project/issues/1709)).
 
 **Vertical writing.** `page footnote` also works in tate, with the tate classes of pLaTeX and upLaTeX (e.g. `tarticle` and `utarticle`) and of LuaTeX-ja (e.g. `ltjtarticle`). With pLaTeX and upLaTeX, load the [pxpgftate](https://ctan.org/pkg/pxpgftate) package as well: without it, TikZ/PGF, and so tcolorbox, draws the boxes sideways in tate. tcbpagefootnote does not load it itself.
@@ -77,6 +79,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 * `test-breakable-long`: no overfull page and no split footnote (`% split` of `\tracingpages`) in the log.
 * `test-tagging` (pdflatex, xelatex, lualatex): `test-tagging.lua` reads the structure tree with `show-pdf-tags` and finds every `FENote` right after its `Lbl`, except the two `\footnotemark` whose texts are given later by `\footnotetext`.
 * `test-tate`: the same checks as for `test-basic`, `test-breakable` and `test-breakable-long`, in tate.
+* `test-nested` (if tcbnestbreak is in `../tcbnestbreak`, or in `TNB=<directory>`): every footnote text is on the page of its mark, no overfull page and no split footnote; also with hyperref, with tagging and in tate.
 * `test-errors`: the expected error message.
 
 | Test | Engines | What it covers |
@@ -85,6 +88,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 | `test-hyperref.tex` | pdflatex, xelatex, lualatex, platex, uplatex | `test-basic.tex` with hyperref |
 | `test-breakable.tex` | pdflatex, xelatex, lualatex, platex, uplatex | a box broken by `\tcbbreak` with footnotes in its title, upper and lower part (each footnote on the page of its mark), an unbroken breakable box, an unbreakable box after a broken one |
 | `test-breakable-long.tex` | pdflatex, xelatex, lualatex (article, ltjsarticle), platex (jarticle, jsarticle), uplatex; with hyperref | boxes that TeX breaks across several pages: a box that starts in the middle of a page, footnotes of one and of several lines in every part, a footnote only in the last part, `height fixed for`, boxes inside a broken box |
+| `test-nested.tex` | pdflatex, xelatex, lualatex (article, ltjsarticle), platex, uplatex; with hyperref, with tagging, in tate | with tcbnestbreak: breakable boxes with `page footnote` inside a breakable box, three levels deep, with footnotes in a title and in a lower part; an unbreakable box inside; a box without the key |
 | `test-japanese.tex` | lualatex (ltjbook), platex (jbook), uplatex (ujbook) | a Japanese document |
 | `test-tagging.tex` | pdflatex, xelatex, lualatex, platex, uplatex | `test-basic.tex` (and `test-breakable.tex`, `test-breakable-long.tex`, `test-japanese.tex`, with hyperref) with `\DocumentMetadata{tagging=on}`; pLaTeX and upLaTeX do not write a structure tree, so only the log is checked |
 | `test-tate.tex` | platex (tarticle), uplatex (utarticle), lualatex (ltjtarticle) | `test-basic.tex`, `test-breakable.tex` and `test-breakable-long.tex` in tate, with pxpgftate for pLaTeX and upLaTeX |
