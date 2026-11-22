@@ -1,10 +1,13 @@
-%% test-breakable-lua.tex
-%% ======================
-%% Typesetting test for LuaLaTeX: breakable boxes with "page footnote"
-%% that TeX breaks across pages (no \tcbbreak).
+%% test-breakable-long.tex
+%% =======================
+%% Typesetting test for every engine: breakable boxes with "page
+%% footnote" that TeX breaks across pages (no \tcbbreak).
 %%
-%%   lualatex test-breakable-lua.tex
-%% The class is article by default; set \CLS for another one.
+%%   pdflatex test-breakable-long.tex   (or xelatex / lualatex)
+%%   platex  test-breakable-long.tex && dvipdfmx test-breakable-long
+%%   uplatex -jobname=test-breakable-long "\def\CLS{ujarticle}\input test-breakable-long"
+%% The class is article by default; set \CLS for another one.  With
+%% pTeX the class option dvipdfmx is given.
 %%
 %% What is covered:
 %%   * a box that starts in the middle of a page and is broken across
@@ -24,7 +27,8 @@
 %%     footnotes;
 %%   * more than six pages (the boxes are broken).
 \ifdefined\CLS\else\def\CLS{article}\fi
-\documentclass{\CLS}
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
 \usepackage{tcbpagefootnote}
 \tcbuselibrary{breakable}
 \ifdefined\TPFhyperref\usepackage{hyperref}\fi

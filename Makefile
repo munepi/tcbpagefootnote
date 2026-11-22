@@ -23,9 +23,8 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##  * every test compiles without errors
 ##  * TPF-RESULT OK and no TPF-* NG: every footnote text is typeset once,
 ##    with its own mark, where it is expected (see test-common.tex)
-##  * test-*breakable-*: exactly one tcbpagefootnote warning, none with
-##    lualatex; the others: none
-##  * test-*breakable-lua-*: no overfull page and no split footnote
+##  * no tcbpagefootnote warning
+##  * test-*breakable-long-*: no overfull page and no split footnote
 ##    ("% split" of \tracingpages)
 ##  * test-*hyperref-*: no warning on a duplicate or missing destination
 ##    in the log or in the output of the engine and (x)dvipdfmx (the
@@ -57,9 +56,18 @@ TESTS := \
   lualatex:test-breakable-lualatex:'\input test-breakable' \
   platex:test-breakable-platex:'\def\CLS{jarticle}\input test-breakable' \
   uplatex:test-breakable-uplatex:'\def\CLS{ujarticle}\input test-breakable' \
-  lualatex:test-breakable-lua-lualatex:'\input test-breakable-lua' \
-  lualatex:test-breakable-lua-ltjsarticle-lualatex:'\def\CLS{ltjsarticle}\input test-breakable-lua' \
-  lualatex:test-hyperref-breakable-lua-lualatex:'\def\TPFhyperref{1}\input test-breakable-lua' \
+  pdflatex:test-breakable-long-pdflatex:'\input test-breakable-long' \
+  xelatex:test-breakable-long-xelatex:'\input test-breakable-long' \
+  lualatex:test-breakable-long-lualatex:'\input test-breakable-long' \
+  lualatex:test-breakable-long-ltjsarticle-lualatex:'\def\CLS{ltjsarticle}\input test-breakable-long' \
+  platex:test-breakable-long-platex:'\def\CLS{jarticle}\input test-breakable-long' \
+  platex:test-breakable-long-jsarticle-platex:'\def\CLS{jsarticle}\input test-breakable-long' \
+  uplatex:test-breakable-long-uplatex:'\def\CLS{ujarticle}\input test-breakable-long' \
+  pdflatex:test-hyperref-breakable-long-pdflatex:'\def\TPFhyperref{1}\input test-breakable-long' \
+  xelatex:test-hyperref-breakable-long-xelatex:'\def\TPFhyperref{1}\input test-breakable-long' \
+  lualatex:test-hyperref-breakable-long-lualatex:'\def\TPFhyperref{1}\input test-breakable-long' \
+  platex:test-hyperref-breakable-long-platex:'\def\CLS{jarticle}\def\TPFhyperref{1}\input test-breakable-long' \
+  uplatex:test-hyperref-breakable-long-uplatex:'\def\CLS{ujarticle}\def\TPFhyperref{1}\input test-breakable-long' \
   lualatex:test-japanese-lualatex:'\input test-japanese' \
   platex:test-japanese-platex:'\def\CLS{jbook}\input test-japanese' \
   uplatex:test-japanese-uplatex:'\def\CLS{ujbook}\input test-japanese' \
@@ -72,7 +80,9 @@ TESTS := \
   lualatex:test-tagging-hyperref-lualatex:'\def\TPFhyperref{1}\input test-tagging' \
   pdflatex:test-tagging-breakable-pdflatex:'\def\TPFfile{test-breakable}\input test-tagging' \
   lualatex:test-tagging-breakable-lualatex:'\def\TPFfile{test-breakable}\input test-tagging' \
-  lualatex:test-tagging-breakable-lua-lualatex:'\def\TPFfile{test-breakable-lua}\input test-tagging' \
+  pdflatex:test-tagging-breakable-long-pdflatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
+  xelatex:test-tagging-breakable-long-xelatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
+  lualatex:test-tagging-breakable-long-lualatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
   lualatex:test-tagging-japanese-lualatex:'\def\TPFfile{test-japanese}\input test-tagging' \
   platex:test-tate-platex:'\input test-tate' \
   uplatex:test-tate-uplatex:'\def\CLS{utarticle}\input test-tate' \
@@ -80,7 +90,9 @@ TESTS := \
   platex:test-tate-breakable-platex:'\def\TPFfile{test-breakable}\input test-tate' \
   uplatex:test-tate-breakable-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-breakable}\input test-tate' \
   lualatex:test-tate-breakable-lualatex:'\def\TPFfile{test-breakable}\input test-tate' \
-  lualatex:test-tate-breakable-lua-lualatex:'\def\TPFfile{test-breakable-lua}\input test-tate'
+  platex:test-tate-breakable-long-platex:'\def\TPFfile{test-breakable-long}\input test-tate' \
+  uplatex:test-tate-breakable-long-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-breakable-long}\input test-tate' \
+  lualatex:test-tate-breakable-long-lualatex:'\def\TPFfile{test-breakable-long}\input test-tate'
 
 ## "<case>:<error message>" of test-errors.tex (pdflatex)
 ERRORS := \
@@ -107,10 +119,9 @@ test:
 	  grep -q '^TPF-RESULT OK' $$job.log || \
 	    { echo "NG: no TPF-RESULT OK in $$job.log"; exit 1; }; \
 	  nwarn=`grep -c 'tcbpagefootnote Warning' $$job.log || true`; \
-	  case $$job in test-*breakable-*lualatex) want=0;; test-*breakable-*) want=1;; *) want=0;; esac; \
-	  [ $$nwarn -eq $$want ] || \
-	    { echo "NG: $$nwarn tcbpagefootnote warning(s) in $$job.log, want $$want"; exit 1; }; \
-	  case $$job in test-*breakable-lua-*) \
+	  [ $$nwarn -eq 0 ] || \
+	    { echo "NG: $$nwarn tcbpagefootnote warning(s) in $$job.log"; exit 1; }; \
+	  case $$job in test-*breakable-long-*) \
 	    if grep 'Overfull .vbox\|^% split' $$job.log; then \
 	      echo "NG: overfull page or split footnote in $$job.log"; exit 1; fi;; \
 	  esac; \

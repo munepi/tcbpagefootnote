@@ -9,25 +9,18 @@
 %% What is covered:
 %%   * a box broken across pages by \tcbbreak, with footnotes in its
 %%     title, in both parts of its upper part and in its lower part.
-%%     With LuaLaTeX, each footnote text is on the page of its mark and
-%%     the package does not warn.  With the other engines, the footnote
-%%     texts of all the parts are put on the page where the box ends,
-%%     and the package warns once;
+%%     Each footnote text is on the page of its mark;
 %%   * a breakable box that is not broken, and an unbreakable box after
-%%     the broken one: no warning.
+%%     the broken one.
 %%
 %% What to check:
-%%   * TPF-RESULT OK, and no tcbpagefootnote warning with LuaLaTeX,
-%%     exactly one ("This box is broken across pages") with the other
-%%     engines.
+%%   * TPF-RESULT OK, TPF-COUNTER OK, and no error or warning.
 \ifdefined\CLS\else\def\CLS{article}\fi
 \ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
 \expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
 \usepackage{tcbpagefootnote}
 \tcbuselibrary{breakable}
 \input{test-common}
-%% Where the text of a footnote in the first part of a broken box is
-\ifdefined\directlua\def\TPFbroken{page}\else\def\TPFbroken{later}\fi
 \begin{document}
 \section*{Breakable boxes}
 
@@ -37,9 +30,8 @@ A breakable box that is not broken\TPFfootnote{A footnote of the
 \end{tcolorbox}
 
 \begin{tcolorbox}[breakable, page footnote,
-  title={A broken box\TPFfootnote[\TPFbroken]{A footnote of the title.}}]
-The first part of a broken box\TPFfootnote[\TPFbroken]{A footnote of the
-  first part.}.
+  title={A broken box\TPFfootnote{A footnote of the title.}}]
+The first part of a broken box\TPFfootnote{A footnote of the first part.}.
 \tcbbreak
 The second part of the box\TPFfootnote{A footnote of the second part.}.
 \tcblower
