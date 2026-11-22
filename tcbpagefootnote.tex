@@ -15,6 +15,7 @@
 \newcommand*\key[1]{\texttt{#1}}
 \newcommand*\meta[1]{$\langle$\textit{#1}$\rangle$}
 \tcbset{colframe=black!60, colback=black!3, fonttitle=\bfseries}
+\emergencystretch=2em
 
 \title{The \pkg{tcbpagefootnote} package\\
   \large Page footnotes from inside tcolorbox}
@@ -115,8 +116,8 @@ boxes have \key{page footnote}, the footnotes of the inner box are put
 on the pages of their marks as well.
 
 \paragraph{Tagged PDF}
-With the new footnote code of \LaTeX{} (loaded, e.g., by
-\verb|\DocumentMetadata{tagging=on}|), the footnote text is typeset
+With \verb|\DocumentMetadata{tagging=on}|, for example, \LaTeX{} loads
+its new footnote code.  With this code, the footnote text is typeset
 where its mark is, as in a \texttt{minipage}, and the typeset text is
 put into the footnote insertion after the box.  In the structure tree,
 the footnote (\texttt{FENote}) then directly follows its mark
@@ -188,6 +189,8 @@ TikZ/PGF, and so \pkg{tcolorbox}, draws the boxes sideways in tate.
 
 \verb|make test| compiles the test files with pdf\LaTeX, Xe\LaTeX,
 Lua\LaTeX, p\LaTeX{} and up\LaTeX{} (+ dvipdfmx) and checks the log.
+The tests pass with \TeX{} Live 2025 (frozen: \LaTeX{} 2025-11-01,
+\pkg{tcolorbox} 6.9.0) and with \TeX{} Live 2026.
 For every footnote, \texttt{test-common.tex} records in the
 \texttt{.aux} file at shipout the page and the mark of both the footnote
 mark and the footnote text, and whether the text is set in the full
@@ -205,8 +208,8 @@ expected page (\texttt{TPF-RESULT OK}).
                                 a box moved to the next page\\
   \texttt{test-hyperref.tex}  & \texttt{test-basic.tex} with
                                 \pkg{hyperref}: no duplicate anchors\\
-  \texttt{test-breakable.tex} & broken and unbroken breakable boxes,
-                                the warning\\
+  \texttt{test-breakable.tex} & a box broken by \cs{tcbbreak}, an
+                                unbroken breakable box\\
   \texttt{test-breakable-long.tex} & boxes that \TeX{} breaks across
                                 several pages\\
   \texttt{test-nested.tex}    & with \pkg{tcbnestbreak}: breakable
@@ -214,10 +217,10 @@ expected page (\texttt{TPF-RESULT OK}).
   \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
                                 ujbook)\\
   \texttt{test-tagging.tex}   & the tests above with
-                                \verb|\DocumentMetadata{tagging=on}|;
-                                \texttt{test-tagging.lua} checks\\
-                              & that each \texttt{FENote} follows its
-                                \texttt{Lbl} in the structure tree\\
+                                \verb|\DocumentMetadata{tagging=on}|;\\
+                              & \texttt{test-tagging.lua} checks that
+                                each \texttt{FENote} follows\\
+                              & its \texttt{Lbl} in the structure tree\\
   \texttt{test-tate.tex}      & \texttt{test-basic.tex} and the
                                 breakable tests in tate\\
                               & (tarticle, utarticle, ltjtarticle)\\

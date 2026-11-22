@@ -39,8 +39,8 @@ The tcbpagefootnote package adds the tcolorbox key `page footnote`. With it, the
 ## Requirements
 
 * `tcolorbox` (the `hooks` library is loaded by the package)
-* Tested with TeX Live 2026 (LaTeX2e 2026-06-01, tcolorbox 6.10.0)
-* For tate with pLaTeX and upLaTeX: `pxpgftate`
+* Tested with TeX Live 2025 (frozen: LaTeX2e 2025-11-01, tcolorbox 6.9.0) and TeX Live 2026 (LaTeX2e 2026-11-01, tcolorbox 6.10.0)
+* For tate with pLaTeX and upLaTeX: `pxpgftate` (in TeX Live from 2026 on; with TeX Live 2025, install it from CTAN)
 
 ## Installation
 
@@ -71,7 +71,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 
 ## Testing
 
-`make test` compiles every test with pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and upLaTeX (+ dvipdfmx), and checks the log:
+`make test` compiles every test with pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and upLaTeX (+ dvipdfmx), and checks the log. `make test TEXBIN=<directory of the binaries>` runs the tests with another TeX Live than the one in `PATH`; `PXPGFTATE=<directory>` (default: `../pxpgftate`) is where pxpgftate is taken from if that TeX Live does not have it.
 
 * `TPF-RESULT OK`: every footnote text is typeset exactly once, with its own mark, on the expected page, as a page footnote or as a footnote of the box (recorded at shipout to the `.aux` file and checked when it is read back at `\end{document}`; see `test-common.tex`).
 * `test-hyperref`, `test-tagging-hyperref`: no warning on a duplicate or missing destination in the log or in the output of the engine and (x)dvipdfmx.

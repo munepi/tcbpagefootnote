@@ -2,9 +2,19 @@ TPFVER := $(shell awk '/ProvidesExplPackage\{tcbpagefootnote\}/{getline; split($
 
 DOCS := tcbpagefootnote.pdf
 
+## The TeX Live to test with: the directory of its binaries, e.g.
+##   make test TEXBIN=/usr/local/texlive/2025/bin/universal-darwin
+## (default: the one in PATH)
+TEXBIN ?=
+
 ## The tcbnestbreak package for test-nested.tex; the tests with it are
 ## skipped if it is not there.
 TNB ?= ../tcbnestbreak
+
+## The pxpgftate package for the tests in tate with pLaTeX and upLaTeX,
+## used if the TeX Live does not have it (TeX Live 2025); these tests
+## are skipped if it is in neither place.
+PXPGFTATE ?= ../pxpgftate
 
 .PHONY: ctanzip
 ctanzip: tcbpagefootnote.zip ## Archive for CTAN upload
@@ -40,14 +50,17 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##    test-tagging-japanese-*: the marks of ltjbook are not tagged as Lbl)
 ##  * test-tate-*: vertical writing (tarticle, utarticle, ltjtarticle);
 ##    the same checks as in yoko
-##  * test-*nested-* (with tcbnestbreak in $(TNB), which is put into
-##    TEXINPUTS for these tests only): breakable boxes inside a
-##    breakable box; no overfull page and no split footnote.
+##  * test-*nested-* (with tcbnestbreak in $(TNB)): breakable boxes
+##    inside a breakable box; no overfull page and no split footnote.
 ##    With tagging, the footnote of the box without "page footnote" is
 ##    the one unpaired mark
 ##  * test-errors-*: the expected error message
 ## A test is "<engine>:<jobname>:<input>".  The output of the engine and
 ## of (x)dvipdfmx is kept in <jobname>.term.
+## $(TNB) and $(PXPGFTATE) are put into TEXINPUTS only for the tests
+## that need them: a directory with files of the same job names (as
+## the tests of tcbnestbreak have) must not be searched by the other
+## tests.
 TESTS := \
   pdflatex:test-basic-pdflatex:'\input test-basic' \
   xelatex:test-basic-xelatex:'\input test-basic' \
@@ -129,13 +142,22 @@ ERRORS := \
 .PHONY: test
 test:
 	@set -e; \
+	$(if $(TEXBIN),export PATH="$(TEXBIN):$$PATH";) \
+	echo "== `pdflatex --version | head -1`"; \
+	if kpsewhich pxpgftate.sty >/dev/null 2>&1; then pxp=kpse; \
+	elif [ -f $(PXPGFTATE)/pxpgftate.sty ]; then pxp=$(PXPGFTATE); \
+	else pxp=; fi; \
 	$(if $(HASTNB),,echo "== test-nested skipped: no $(TNB)/tcbnestbreak.sty";) \
 	for t in $(TESTS) $(if $(HASTNB),$(NESTED)); do \
 	  eng=$${t%%:*}; rest=$${t#*:}; job=$${rest%%:*}; in=$${rest#*:}; \
 	  echo "== $$eng $$job"; \
+	  ti=.; case $$job in test-*nested-*) ti="$$ti:$(TNB)";; esac; \
+	  case $$job in test-tate-*platex) \
+	    case "$$pxp" in "") echo "   skipped: no pxpgftate.sty"; continue;; kpse) ;; *) ti="$$ti:$$pxp";; esac;; \
+	  esac; \
+	  pre="env TEXINPUTS=$$ti:$$TEXINPUTS"; \
 	  rm -f $$job.aux $$job.dvi $$job.xdv; \
 	  opt=; if [ $$eng = xelatex ]; then opt=-no-pdf; fi; \
-	  pre=; case $$job in test-*nested-*) pre="env TEXINPUTS=.:$(TNB):$$TEXINPUTS";; esac; \
 	  $$pre $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true; \
 	  case $$job in test-tagging-*) \
 	    $$pre $$eng $$opt -interaction=nonstopmode -jobname=$$job "$$in" >$$job.term 2>&1 || true;; \
