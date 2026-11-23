@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tcbpagefootnote}
 \usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
-\newcommand*\tpfversion{v1.4 (2026/11/22)}
+\newcommand*\tpfversion{v1.5 (2026/11/24)}
 \newcommand*\cs[1]{\texttt{\char`\\#1}}
 \newcommand*\pkg[1]{\textsf{#1}}
 \newcommand*\key[1]{\texttt{#1}}
@@ -244,15 +244,19 @@ sets the footnotes of the page in another width.
 \section{History}
 
 \begin{description}
+\item[v1.5 (2026/11/24)] With Lua\LaTeX, what a part of a broken box
+  leaves for its footnotes follows the \cs{count}\cs{footins} of the
+  column of the part, which a package may change from column to
+  column (e.g.\ \pkg{ftnright}).  With the new footnote code of
+  \LaTeX, the footnote text is typeset by the \cs{@footnotetext} of
+  the page: code that a package has put around it acts on the
+  footnotes of a box as well.
 \item[v1.4 (2026/11/22)] A \key{breakable} box that is broken across
   pages puts each footnote text on the page of its mark: with
   Lua\LaTeX{} through the new file \texttt{tcbpagefootnote.lua}, with
   the other engines through \cs{marks}.  With the
   \pkg{tcbnestbreak} package, this also holds for a breakable box with
-  \key{page footnote} inside such a box.  With the new footnote code
-  of \LaTeX, the footnote text is typeset by the \cs{@footnotetext} of
-  the page: code that a package has put around it acts on the
-  footnotes of a box as well.
+  \key{page footnote} inside such a box.
 \item[v1.3 (2026/11/17)] Vertical writing: \key{page footnote} is
   tested in tate with p\LaTeX{}, up\LaTeX{} (with \pkg{pxpgftate}) and
   Lua\TeX-ja.  The code of the package is unchanged.
