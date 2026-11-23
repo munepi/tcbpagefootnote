@@ -40,6 +40,12 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##  * no tcbpagefootnote warning
 ##  * test-*breakable-long-*: no overfull page and no split footnote
 ##    ("% split" of \tracingpages)
+##  * test-*twocolumn-*: the two columns of LaTeX, also with ftnright;
+##    no overfull page, no split footnote, and the parts of the boxes
+##    are in the expected columns (TPF-COLUMN)
+##  * test-*width-*: code around \@footnotetext sets the footnotes of
+##    the page in another width (\TPFwidth of test-common.tex), also
+##    with tagging; a page footnote has this width
 ##  * test-*hyperref-*: no warning on a duplicate or missing destination
 ##    in the log or in the output of the engine and (x)dvipdfmx (the
 ##    info "mathml file ... does not exist" of tagging is ignored)
@@ -90,6 +96,20 @@ TESTS := \
   lualatex:test-hyperref-breakable-long-lualatex:'\def\TPFhyperref{1}\input test-breakable-long' \
   platex:test-hyperref-breakable-long-platex:'\def\CLS{jarticle}\def\TPFhyperref{1}\input test-breakable-long' \
   uplatex:test-hyperref-breakable-long-uplatex:'\def\CLS{ujarticle}\def\TPFhyperref{1}\input test-breakable-long' \
+  pdflatex:test-twocolumn-pdflatex:'\input test-twocolumn' \
+  xelatex:test-twocolumn-xelatex:'\input test-twocolumn' \
+  lualatex:test-twocolumn-lualatex:'\input test-twocolumn' \
+  platex:test-twocolumn-platex:'\input test-twocolumn' \
+  uplatex:test-twocolumn-uplatex:'\input test-twocolumn' \
+  pdflatex:test-ftnright-twocolumn-pdflatex:'\def\TPFftnright{1}\input test-twocolumn' \
+  xelatex:test-ftnright-twocolumn-xelatex:'\def\TPFftnright{1}\input test-twocolumn' \
+  lualatex:test-ftnright-twocolumn-lualatex:'\def\TPFftnright{1}\input test-twocolumn' \
+  platex:test-ftnright-twocolumn-platex:'\def\TPFftnright{1}\input test-twocolumn' \
+  uplatex:test-ftnright-twocolumn-uplatex:'\def\TPFftnright{1}\input test-twocolumn' \
+  pdflatex:test-width-pdflatex:'\def\TPFwidth{.75\columnwidth}\input test-basic' \
+  lualatex:test-width-lualatex:'\def\TPFwidth{.75\columnwidth}\input test-basic' \
+  pdflatex:test-breakable-long-width-pdflatex:'\def\TPFwidth{.75\columnwidth}\input test-breakable-long' \
+  lualatex:test-breakable-long-width-lualatex:'\def\TPFwidth{.75\columnwidth}\input test-breakable-long' \
   lualatex:test-japanese-lualatex:'\input test-japanese' \
   platex:test-japanese-platex:'\def\CLS{jbook}\input test-japanese' \
   uplatex:test-japanese-uplatex:'\def\CLS{ujbook}\input test-japanese' \
@@ -105,6 +125,10 @@ TESTS := \
   pdflatex:test-tagging-breakable-long-pdflatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
   xelatex:test-tagging-breakable-long-xelatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
   lualatex:test-tagging-breakable-long-lualatex:'\def\TPFfile{test-breakable-long}\input test-tagging' \
+  pdflatex:test-tagging-width-pdflatex:'\def\TPFwidth{.75\columnwidth}\input test-tagging' \
+  lualatex:test-tagging-width-lualatex:'\def\TPFwidth{.75\columnwidth}\input test-tagging' \
+  pdflatex:test-tagging-breakable-long-width-pdflatex:'\def\TPFwidth{.75\columnwidth}\def\TPFfile{test-breakable-long}\input test-tagging' \
+  lualatex:test-tagging-breakable-long-width-lualatex:'\def\TPFwidth{.75\columnwidth}\def\TPFfile{test-breakable-long}\input test-tagging' \
   lualatex:test-tagging-japanese-lualatex:'\def\TPFfile{test-japanese}\input test-tagging' \
   platex:test-tate-platex:'\input test-tate' \
   uplatex:test-tate-uplatex:'\def\CLS{utarticle}\input test-tate' \
@@ -171,7 +195,7 @@ test:
 	  nwarn=`grep -c 'tcbpagefootnote Warning' $$job.log || true`; \
 	  [ $$nwarn -eq 0 ] || \
 	    { echo "NG: $$nwarn tcbpagefootnote warning(s) in $$job.log"; exit 1; }; \
-	  case $$job in test-*breakable-long-*|test-*nested-*) \
+	  case $$job in test-*breakable-long-*|test-*nested-*|test-*twocolumn-*) \
 	    if grep 'Overfull .vbox\|^% split' $$job.log; then \
 	      echo "NG: overfull page or split footnote in $$job.log"; exit 1; fi;; \
 	  esac; \

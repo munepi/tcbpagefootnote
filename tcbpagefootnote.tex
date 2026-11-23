@@ -106,6 +106,10 @@ way that depends on the engine.
   mark tells which part the footnote belongs to.  The content is split
   again, from a copy, until the part and its footnotes fit.
 \end{itemize}
+With every engine, what a part leaves for its footnotes is computed
+with the \cs{count}\cs{footins} and \cs{skip}\cs{footins} of the column
+of the part: a package may change them from column to column (e.g.\
+\pkg{ftnright} in the two columns of \LaTeX).
 See also Section~\ref{sec:limitations}.
 
 \paragraph{Breakable boxes inside breakable boxes}
@@ -121,9 +125,12 @@ its new footnote code.  With this code, the footnote text is typeset
 where its mark is, as in a \texttt{minipage}, and the typeset text is
 put into the footnote insertion after the box.  In the structure tree,
 the footnote (\texttt{FENote}) then directly follows its mark
-(\texttt{Lbl}), as for a footnote in the body text.  The text is set in
-the \cs{columnwidth} outside the box and in the normal color, not in the
-text color of the box.
+(\texttt{Lbl}), as for a footnote in the body text.  The text is
+typeset by the \cs{@footnotetext} of the page, in the \cs{columnwidth}
+outside the box and in the normal color, not in the text color of the
+box.  If a package has put code around \cs{@footnotetext}, e.g.\ to set
+the footnotes in another width, it acts on the footnotes of a box as
+well.
 
 \paragraph{Vertical writing}
 \key{page footnote} also works in tate, with the tate classes of
@@ -212,6 +219,8 @@ expected page (\texttt{TPF-RESULT OK}).
                                 unbroken breakable box\\
   \texttt{test-breakable-long.tex} & boxes that \TeX{} breaks across
                                 several pages\\
+  \texttt{test-twocolumn.tex} & boxes broken across the two columns of
+                                \LaTeX, also with \pkg{ftnright}\\
   \texttt{test-nested.tex}    & with \pkg{tcbnestbreak}: breakable
                                 boxes inside a breakable box\\
   \texttt{test-japanese.tex}  & Japanese classes (ltjbook, jbook,
@@ -228,6 +237,9 @@ expected page (\texttt{TPF-RESULT OK}).
   \hline
 \end{tabular}
 \end{center}
+\texttt{test-basic.tex} and \texttt{test-breakable-long.tex} are also
+run, without and with tagging, with code around \cs{@footnotetext} that
+sets the footnotes of the page in another width.
 
 \section{History}
 
@@ -237,7 +249,10 @@ expected page (\texttt{TPF-RESULT OK}).
   Lua\LaTeX{} through the new file \texttt{tcbpagefootnote.lua}, with
   the other engines through \cs{marks}.  With the
   \pkg{tcbnestbreak} package, this also holds for a breakable box with
-  \key{page footnote} inside such a box.
+  \key{page footnote} inside such a box.  With the new footnote code
+  of \LaTeX, the footnote text is typeset by the \cs{@footnotetext} of
+  the page: code that a package has put around it acts on the
+  footnotes of a box as well.
 \item[v1.3 (2026/11/17)] Vertical writing: \key{page footnote} is
   tested in tate with p\LaTeX{}, up\LaTeX{} (with \pkg{pxpgftate}) and
   Lua\TeX-ja.  The code of the package is unchanged.

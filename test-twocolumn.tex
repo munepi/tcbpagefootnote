@@ -1,0 +1,127 @@
+%% test-twocolumn.tex
+%% ==================
+%% Typesetting test for every engine: breakable boxes with "page
+%% footnote" that are broken across the two columns of LaTeX
+%% (\twocolumn), also with the ftnright package.
+%%
+%%   pdflatex test-twocolumn.tex   (or xelatex / lualatex)
+%%   platex  test-twocolumn.tex && dvipdfmx test-twocolumn
+%%   pdflatex -jobname=test-ftnright-twocolumn "\def\TPFftnright{1}\input test-twocolumn"
+%% The class is article with every engine: the lines of the test are
+%% counted for its columns.  With pTeX the class option dvipdfmx is
+%% given.
+%%
+%% ftnright puts the footnotes of both columns into the right column:
+%% \count\footins and \skip\footins are 0 in the left column, and a
+%% footnote takes its height only from the right column.  What a part
+%% of a broken box leaves for its footnotes therefore depends on the
+%% column of the part.
+%%
+%% What is covered:
+%%   * a box that starts in the left column of page 1, is broken into
+%%     the right column and ends on page 2: its part in the right
+%%     column fills the column and has two footnotes;
+%%   * a box that starts in the right column of page 2 and ends in the
+%%     left column of page 3: with ftnright, its part in the left
+%%     column has three footnotes and leaves no room for them, so that
+%%     the last line of the box is still in this column;
+%%   * footnotes of the text before and between the boxes (not at the
+%%     end of a column, where LaTeX splits a footnote).
+%%
+%% What to check:
+%%   * TPF-RESULT OK (every footnote text is on the page of its mark),
+%%     TPF-COUNTER OK, and no error or warning;
+%%   * no TPF-COLUMN NG: the lines with \TPFcolumn are in the columns
+%%     given above;
+%%   * no "Overfull \vbox" and no "% split" (of \tracingpages: TeX had
+%%     to split a footnote) in the log: the parts leave room for their
+%%     footnotes;
+%%   * three pages.
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx,}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT twocolumn]{article}
+\ifdefined\TPFftnright\usepackage{ftnright}\fi
+\usepackage{tcbpagefootnote}
+\tcbuselibrary{breakable}
+\input{test-common}
+%% No stretch or shrink above the footnotes: a column that needs the
+%% shrink is overfull by the depth of its last line (LaTeX kernel).
+\skip\footins=1\skip\footins
+%% A footnote of three lines
+\newcommand\fn{\TPFfootnote{note\par note\par note}}
+\ExplSyntaxOn
+%% \TPFlines{<n>}: <n> empty lines
+\NewDocumentCommand \TPFlines { m }
+  {
+    \prg_replicate:nn {#1}
+      { \par \noindent \hbox_to_wd:nn { \linewidth } { \strut \hfil } }
+    \par
+  }
+%% \TPFcolumn{<left or right>}: check, at shipout, that this place is
+%% in the left or in the right column (in the left or in the right
+%% half of the text area)
+\int_new:N \g__tpf_column_int
+\NewDocumentCommand \TPFcolumn { m }
+  {
+    \int_gincr:N \g__tpf_column_int
+    \mode_leave_vertical:
+    \tex_savepos:D
+    \exp_args:NNe \iow_shipout_e:Nn \c_log_iow
+      {
+        TPF-COLUMN~
+        \exp_not:N \str_if_eq:eeTF
+          { \exp_not:N \__tpf_column: } {#1} { OK } { NG }
+        :~\int_use:N \g__tpf_column_int :~
+        p.\exp_not:N \thepage ,~
+        want~#1,~is~\exp_not:N \__tpf_column:
+      }
+  }
+\cs_new:Npn \__tpf_column:
+  {
+    \int_compare:nNnTF { \tex_lastxpos:D }
+      < {
+          \dim_to_decimal_in_sp:n
+            { 1in + \hoffset + \oddsidemargin + \textwidth / 2 }
+        }
+      { left } { right }
+  }
+\ExplSyntaxOff
+\begin{document}
+\tracingpages=1
+\TPFlines{4}
+text\fn
+\TPFlines{12}
+%% From the left column of page 1 to the left column of page 2: the
+%% part in the right column fills it and has two footnotes.
+\begin{tcolorbox}[breakable, page footnote]
+first\fn\TPFcolumn{left}
+\TPFlines{30}
+second\fn\TPFcolumn{right}
+\TPFlines{20}
+third\fn\TPFcolumn{right}
+\TPFlines{30}
+fourth\fn\TPFcolumn{left}
+\TPFlines{4}
+\end{tcolorbox}
+\TPFlines{4}
+text\fn
+\TPFlines{30}
+%% From the right column of page 2 to the left column of page 3.
+%% With ftnright, the footnotes of the part in the left column take
+%% nothing from it: the last line of the box is still in this column.
+\begin{tcolorbox}[breakable, page footnote]
+fifth\fn\TPFcolumn{right}
+\TPFlines{26}
+sixth\fn\TPFcolumn{left}
+\TPFlines{10}
+seventh\fn
+\TPFlines{10}
+eighth\fn
+\TPFlines{3}
+last\ifdefined\TPFftnright\TPFcolumn{left}\fi
+\end{tcolorbox}
+
+\TPFcounter{footnote}{10}
+\ifnum\value{page}=3 \else
+  \typeout{TPF-PAGES NG: \arabic{page} pages, want 3}%
+\fi
+\end{document}

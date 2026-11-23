@@ -18,10 +18,17 @@
 %%   is not a number (numbers are used by \TPFfootnote).
 %% \TPFcounter{<counter>}{<value>}
 %%   Check the value of <counter> at this point.
+%% \TPFwidth (optional, defined before this file is input)
+%%   A width, e.g. \def\TPFwidth{.75\columnwidth}: code is put around
+%%   \@footnotetext of the page, as a package for a multi-column
+%%   layout does, that sets the footnotes of the page in this width
+%%   (computed from the \columnwidth that \@footnotetext is called
+%%   with).  A page footnote is then a footnote set in this width.
 %%
 %% For each mark and each text, the page, the mark (\@thefnmark), the
 %% hyperref anchor (if any) and, for a text, whether it is set in the
-%% full \columnwidth of the page (a page footnote) are written to the .aux file at shipout.  When the
+%% full \columnwidth of the page, or in \TPFwidth (a page footnote)
+%% are written to the .aux file at shipout.  When the
 %% .aux file is read back at \end{document}, every mark is checked:
 %%   * its text is typeset exactly once, with the same mark;
 %%   * the text is where <kind> says;
@@ -36,7 +43,21 @@
 \dim_new:N  \g__tpf_colwd_dim
 \tl_new:N   \l__tpf_tmp_tl
 \AddToHook { begindocument/end }
-  { \dim_gset:Nn \g__tpf_colwd_dim { \columnwidth } }
+  {
+    \cs_if_exist:NTF \TPFwidth
+      {
+        \dim_gset:Nn \g__tpf_colwd_dim { \TPFwidth }
+        \cs_set_eq:NN \__tpf_footnotetext:n \@footnotetext
+        \cs_set_protected:Npn \@footnotetext #1
+          {
+            \group_begin:
+              \dim_set:Nn \columnwidth { \TPFwidth }
+              \__tpf_footnotetext:n {#1}
+            \group_end:
+          }
+      }
+      { \dim_gset:Nn \g__tpf_colwd_dim { \columnwidth } }
+  }
 
 \cs_new_protected:Npn \__tpf_ng:n #1
   {

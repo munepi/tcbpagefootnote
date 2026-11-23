@@ -30,13 +30,16 @@
 %%   With hyperref, each footnote text keeps the anchor of its own mark.
 %%   With the new footnote code of LaTeX (latex-lab-footnotes, e.g. with
 %%   \DocumentMetadata{tagging=on}), the footnote text is instead typeset
-%%   at its mark and the typeset text is output after the box: in a
-%%   tagged PDF its FENote then follows the Lbl of its mark.
+%%   at its mark, by \@footnotetext of the page, and the typeset text
+%%   is output after the box: in a tagged PDF its FENote then follows
+%%   the Lbl of its mark.
 %%   Each part of a breakable box that is broken across pages puts the
 %%   footnotes of its marks on its page (see 6.-8.): with LuaLaTeX by
 %%   taking their insertions out of the part (tcbpagefootnote.lua),
 %%   with the other engines by keeping each footnote text in a box and
-%%   finding the part of its mark with \marks.
+%%   finding the part of its mark with \marks.  What a part leaves
+%%   for its footnotes is computed with \count\footins and
+%%   \skip\footins of its column (ftnright changes them).
 %%   With the tcbnestbreak package, a breakable box inside a breakable
 %%   box is broken as well; with "page footnote" on both, the
 %%   footnotes of the box inside are put on the pages of their marks.
@@ -191,12 +194,20 @@
 %%    output after the box through the fntext/process socket, i.e.
 %%    into \footins, into the box of an outer box with "page footnote"
 %%    or into \@mpfootins of an outer ordinary box.
-%%    The text is set in the \columnwidth and \textwidth outside the
-%%    box, saved when a box starts (\tcb@layer@inc) unless the
-%%    enclosing box has "page footnote".  The color is reset:
-%%    the material would otherwise carry the text color of the box.
-%%    \nobreak keeps the color special from being a place where the
-%%    insertion can be split before its first line.
+%%    The text is typeset by \@footnotetext of the page (saved in 6.)
+%%    in the \columnwidth and \textwidth outside the box, saved when
+%%    a box starts (\tcb@layer@inc) unless the enclosing box has "page
+%%    footnote": code that the document has put around \@footnotetext,
+%%    e.g. to set the footnotes in another width, acts as for a
+%%    footnote of the body text.  \@footnotetext of the page calls
+%%    \fnote_footnotetext:n, and the plug of the box gets the text.
+%%    \fnote_footnotetext:n is called as it is where the plug of the
+%%    box is no longer assigned (e.g. in a minipage in the box), and
+%%    if \@footnotetext of the page is \@mpfootnotetext, which does
+%%    not use the socket.
+%%    The color is reset: the material would otherwise carry the text
+%%    color of the box.  \nobreak keeps the color special from being
+%%    a place where the insertion can be split before its first line.
 %% -----------------------------------------------------------------
 \box_new:N \g__tcbpagefootnote_notes_box
 \box_new:N \l__tcbpagefootnote_notes_box
@@ -214,11 +225,31 @@
       }
   }
 
+%% #1: the plug of the box, #2: the footnote text
+\cs_new_protected:Npn \__tcbpagefootnote_socket_text:nn #1#2
+  {
+    \bool_lazy_and:nnTF
+      { \socket_if_plug_assigned_p:nn { fntext/process } {#1} }
+      {
+        ! \cs_if_eq_p:NN \__tcbpagefootnote_page_footnotetext:n
+          \@mpfootnotetext
+      }
+      {
+        \group_begin:
+          \columnwidth \l__tcbpagefootnote_columnwidth_dim
+          \textwidth \l__tcbpagefootnote_textwidth_dim
+          \__tcbpagefootnote_page_footnotetext:n {#2}
+        \group_end:
+      }
+      { \fnote_footnotetext:n {#2} }
+  }
+
 \cs_new_protected:Npn \__tcbpagefootnote_socket_restore:
   {
     \cs_set:Npn \@mpfn { footnote }
     \cs_set:Npn \thempfn { \thefootnote }
-    \cs_set_eq:NN \@footnotetext \fnote_footnotetext:n
+    \cs_set_protected:Npn \@footnotetext
+      { \__tcbpagefootnote_socket_text:nn { tcbpagefootnote } }
     \AssignSocketPlug { fntext/process } { tcbpagefootnote }
     \tl_set:Ne \l__tcbpagefootnote_layer_tl { \int_use:N \c@tcblayer }
   }
@@ -250,9 +281,6 @@
         \global \setbox \g__tcbpagefootnote_notes_box \vbox
           {
             \unvbox \g__tcbpagefootnote_notes_box
-            \columnwidth \l__tcbpagefootnote_columnwidth_dim
-            \textwidth \l__tcbpagefootnote_textwidth_dim
-            \linewidth \columnwidth
             \color@begingroup
               \normalcolor
               \nobreak
@@ -463,7 +491,9 @@
 %%    (a) when the content is typeset, a "reserve" is put after each
 %%        insertion: an empty box that is as high as the insertion
 %%        will be on the page.  tcolorbox then counts the footnotes
-%%        when it measures and splits the content;
+%%        when it measures and splits the content.  The heights of the
+%%        reserves are set again before each part is split off, to
+%%        what the insertions take from the page there;
 %%    (b) before a part is drawn, its reserves are removed and its
 %%        insertions are taken out;
 %%    (c) the insertions are written right after the part.
@@ -500,15 +530,15 @@
     \tl_set:Ne \l__tcbpagefootnote_layer_tl { \int_use:N \c@tcblayer }
   }
 
+%%     With the new footnote code of LaTeX, \@footnotetext of the
+%%     page is called in the same way, and the plug of the box makes
+%%     the \insert (as in 1'-3').
 \cs_if_exist:NT \fnote_footnotetext:n
   {
     \NewSocketPlug { fntext/process } { tcbpagefootnote-insert }
       {
         \insert \footins
           {
-            \columnwidth \l__tcbpagefootnote_columnwidth_dim
-            \textwidth \l__tcbpagefootnote_textwidth_dim
-            \linewidth \columnwidth
             \reset@font
             \footnotesize
             \splittopskip \footnotesep
@@ -525,7 +555,8 @@
       {
         \cs_set:Npn \@mpfn { footnote }
         \cs_set:Npn \thempfn { \thefootnote }
-        \cs_set_eq:NN \@footnotetext \fnote_footnotetext:n
+        \cs_set_protected:Npn \@footnotetext
+          { \__tcbpagefootnote_socket_text:nn { tcbpagefootnote-insert } }
         \AssignSocketPlug { fntext/process } { tcbpagefootnote-insert }
         \tl_set:Ne \l__tcbpagefootnote_layer_tl { \int_use:N \c@tcblayer }
       }
@@ -553,6 +584,72 @@
       }
   }
 \AddToHook { cmd/tcb@draw@color@box/before } { \__tcbpagefootnote_reserve: }
+
+%%     What an insertion takes from the page depends on \count\footins,
+%%     which a package can change from column to column (ftnright: 0
+%%     in the left column, 1000 in the right one).  When tcolorbox
+%%     asks for the height that is left on the page (\tcb@comp@h@page)
+%%     for the next part, \count\footins is that of the column of this
+%%     part: the heights of the reserves are set again, and what
+%%     tcolorbox has measured already (\tcb@h@title, \tcb@h@upper,
+%%     \tcb@h@lower and, before the first split, \tcb@h@total) is
+%%     measured again.  The content that is not split off yet is in
+%%     \tcb@upperbox and \tcb@lowerbox before the first split, and in
+%%     \tcb@totalupperbox and \tcb@totallowerbox after it
+%%     (\tcb@h@upper is then measured by tcolorbox).
+\bool_new:N \l__tcbpagefootnote_update_bool
+
+\cs_new_protected:Npn \__tcbpagefootnote_update:NT #1#2
+  {
+    \int_compare:nNnT
+      { \lua_now:e { tcbpagefootnote.update_reserves ( \int_use:N #1 ) } }
+      = { 1 }
+      { \__tcbpagefootnote_repack:N #1 #2 }
+  }
+
+\cs_new_protected:Npn \__tcbpagefootnote_title_ht:
+  {
+    \legacy_if:nT { tcb@hasTitle }
+      {
+        \tcbdimto \tcb@h@title
+          { \ht \tcb@titlebox + \dp \tcb@titlebox }
+        \tcbdimto \tcb@h@padtitle
+          {
+            \kvtcb@title@rule + \kvtcb@boxsep * 2 + \kvtcb@toptitle
+            + \kvtcb@bottomtitle + \tcb@h@title
+          }
+      }
+  }
+
+\cs_new_protected:Npn \__tcbpagefootnote_update:
+  {
+    \__tcbpagefootnote_if_insert:T
+      {
+        \bool_set_false:N \l__tcbpagefootnote_update_bool
+        \__tcbpagefootnote_update:NT \tcb@titlebox
+          {
+            \bool_set_true:N \l__tcbpagefootnote_update_bool
+            \__tcbpagefootnote_title_ht:
+          }
+        \__tcbpagefootnote_update:NT \tcb@upperbox
+          {
+            \bool_set_true:N \l__tcbpagefootnote_update_bool
+            \tcb@defToTotalHeight \tcb@h@upper { \tcb@upperbox }
+          }
+        \__tcbpagefootnote_update:NT \tcb@lowerbox
+          {
+            \bool_set_true:N \l__tcbpagefootnote_update_bool
+            \legacy_if:nT { tcb@lowerspace }
+              { \tcb@defToTotalHeight \tcb@h@lower { \tcb@lowerbox } }
+          }
+        \bool_if:NT \l__tcbpagefootnote_update_bool
+          { \tcb@comp@h@total@standalone }
+        \__tcbpagefootnote_update:NT \tcb@totalupperbox { }
+        \__tcbpagefootnote_update:NT \tcb@totallowerbox
+          { \tcb@defToTotalHeight \tcb@h@lower { \tcb@totallowerbox } }
+      }
+  }
+\AddToHook { cmd/tcb@comp@h@page/after } { \__tcbpagefootnote_update: }
 
 %%     \skip\footins, put before the first footnote of a page, cannot
 %%     be a reserve.  It is taken from the height that is left on the
@@ -678,18 +775,7 @@
     \__tcbpagefootnote_if_insert:T
       {
         \__tcbpagefootnote_strip:NT \tcb@titlebox
-          {
-            \legacy_if:nT { tcb@hasTitle }
-              {
-                \tcbdimto \tcb@h@title
-                  { \ht \tcb@titlebox + \dp \tcb@titlebox }
-                \tcbdimto \tcb@h@padtitle
-                  {
-                    \kvtcb@title@rule + \kvtcb@boxsep * 2 + \kvtcb@toptitle
-                    + \kvtcb@bottomtitle + \tcb@h@title
-                  }
-              }
-          }
+          { \__tcbpagefootnote_title_ht: }
         \__tcbpagefootnote_strip:NT \tcb@upperbox
           {
             \tcbdimto \tcb@h@upper
@@ -897,15 +983,15 @@
 \cs_new_protected:Npn \__tcbpagefootnote_note_out:
   { \tex_insert:D \footins { \__tcbpagefootnote_note_unpack: } }
 
+%%     With the new footnote code of LaTeX, \@footnotetext of the
+%%     page is called in the same way, and the plug of the box keeps
+%%     the text (as in 1'-3').
 \cs_if_exist:NT \fnote_footnotetext:n
   {
     \NewSocketPlug { fntext/process } { tcbpagefootnote-store }
       {
         \tex_global:D \tex_setbox:D \g__tcbpagefootnote_note_box \tex_vbox:D
           {
-            \columnwidth \l__tcbpagefootnote_columnwidth_dim
-            \textwidth \l__tcbpagefootnote_textwidth_dim
-            \linewidth \columnwidth
             \color@begingroup
               \normalcolor
               \nobreak
@@ -918,7 +1004,8 @@
       {
         \cs_set:Npn \@mpfn { footnote }
         \cs_set:Npn \thempfn { \thefootnote }
-        \cs_set_eq:NN \@footnotetext \fnote_footnotetext:n
+        \cs_set_protected:Npn \@footnotetext
+          { \__tcbpagefootnote_socket_text:nn { tcbpagefootnote-store } }
         \AssignSocketPlug { fntext/process } { tcbpagefootnote-store }
         \tl_set:Ne \l__tcbpagefootnote_layer_tl { \int_use:N \c@tcblayer }
       }

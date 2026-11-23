@@ -16,13 +16,17 @@
 -- \insert at its mark.  The insertion (an ins node) stays in the box
 -- of the content and, when tcolorbox splits this box with \vsplit, in
 -- the part of its mark.
---   add_reserves  puts a "reserve" after each insertion: an empty box
---                 that is as high as the insertion will be on the page,
---                 so that tcolorbox counts the footnotes when it
---                 measures and splits the content;
---   strip         removes the reserves from a part that is about to be
---                 drawn and takes its insertions out;
---   flush         writes these insertions after the part.
+--   add_reserves     puts a "reserve" after each insertion: an empty
+--                    box that is as high as the insertion will be on
+--                    the page, so that tcolorbox counts the footnotes
+--                    when it measures and splits the content;
+--   update_reserves  sets the heights of the reserves again, before
+--                    each part is split off: what an insertion takes
+--                    from the page (\count\footins) can differ from
+--                    column to column (ftnright);
+--   strip            removes the reserves from a part that is about to
+--                    be drawn and takes its insertions out;
+--   flush            writes these insertions after the part.
 --
 local M = {}
 
@@ -37,7 +41,7 @@ local reserve_attr = luatexbase.new_attribute("tcbpagefootnote_reserve")
 local pending = {}
 
 -- What an insertion takes from the page (as the page builder of TeX
--- computes it)
+-- computes it), with the \count of its class as it is now
 local function ins_height(n)
   local count = tex.count[n.subtype]
   if count == 1000 then return n.height end
@@ -64,6 +68,18 @@ local function ins_inside(head)
   return found, total
 end
 
+-- The insertions of the node n of the list of a box register: of an
+-- insertion, or of a box that is not a reserve (see ins_inside)
+local function ins_of(n)
+  local id = n.id
+  if id == ins_id then
+    return true, ins_height(n)
+  elseif (id == hlist_id or id == vlist_id) and not is_reserve(n) then
+    return ins_inside(n.list)
+  end
+  return false, 0
+end
+
 -- Put a reserve after each insertion of the box register b and after
 -- each box in it that has insertions inside.  A reserve is not
 -- discardable and there is no breakpoint between it and its
@@ -76,12 +92,7 @@ local function add_reserves(b)
   local n = head
   while n do
     local nxt = n.next
-    local found, total = false, 0
-    if n.id == ins_id then
-      found, total = true, ins_height(n)
-    elseif (n.id == hlist_id or n.id == vlist_id) and not is_reserve(n) then
-      found, total = ins_inside(n.list)
-    end
+    local found, total = ins_of(n)
     if found then
       local r = node.new(hlist_id)
       r.height = total
@@ -92,6 +103,26 @@ local function add_reserves(b)
     n = nxt
   end
   box.list = head
+  return changed
+end
+
+-- Set the height of each reserve of the box register b again, to what
+-- the insertions before it take from the page now.
+-- Returns true if a height is changed (the box has to be packed again).
+local function update_reserves(b)
+  local box = tex.box[b]
+  if not box or box.id ~= vlist_id then return false end
+  local changed = false
+  for n in node.traverse(box.list) do
+    local r = n.next
+    if r and is_reserve(r) then
+      local found, total = ins_of(n)
+      if found and r.height ~= total then
+        r.height = total
+        changed = true
+      end
+    end
+  end
   return changed
 end
 
@@ -155,6 +186,11 @@ local removed_total = 0
 -- 1 if the box is changed, else 0
 function M.add_reserves(b)
   tex.sprint(add_reserves(b) and 1 or 0)
+end
+
+-- 1 if the height of a reserve of the box is changed, else 0
+function M.update_reserves(b)
+  tex.sprint(update_reserves(b) and 1 or 0)
 end
 
 -- 1 if one of the box registers has a reserve, else 0
