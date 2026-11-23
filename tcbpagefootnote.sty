@@ -19,8 +19,9 @@
 %%   bottom of the box.
 %%
 %% What this package does
-%%   The tcolorbox key "page footnote" makes \footnote inside the box
-%%   (title, upper and lower part) behave as in the body text:
+%%   The tcolorbox key "page footnote" makes \footnote inside the
+%%   title, the upper part and the lower part of the box behave as in
+%%   the body text:
 %%     (1) the footnote counter and \thefootnote are used for the mark;
 %%     (2) the footnote text is collected, together with its mark, while
 %%         the box is typeset, and is put into the ordinary footnote
@@ -76,7 +77,7 @@
 \tl_new:N \l__tcbpagefootnote_href_tl
 %% The key "page footnote" is given to this box
 \bool_new:N \l__tcbpagefootnote_key_bool
-%% The upper or lower part of the box starts (used in 8.)
+%% The upper or lower part of the box starts; used in 8.
 \cs_new_eq:NN \__tcbpagefootnote_begin:n \use_none:n
 
 %% -----------------------------------------------------------------
@@ -316,7 +317,7 @@
 %%    and then splits it.  The footnote texts are not collected as in
 %%    2.-3.: each part puts the footnotes of its marks right after
 %%    its picture, before the page is broken.  The part leaves room
-%%    for them.  How this is done depends on the engine (7. and 8.);
+%%    for them.  How this is done depends on the engine, see 7. and 8.;
 %%    this section has what is common.
 %%    This is not done in multicols (as tcolorbox finds it), where
 %%    the footnotes are below all the columns and do not take their

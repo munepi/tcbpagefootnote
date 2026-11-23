@@ -66,7 +66,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 * Keys that set the whole `after` code (such as `after`, `after skip` and `nobeforeafter`) remove the code that puts the footnotes when they come after `page footnote` (error): give them before it, e.g. `[after skip=1pt, page footnote]`.
 * In a `multicols` environment, where the footnotes are below all the columns, and inside another box such as a `minipage`, a `breakable` box that is broken puts the footnote texts of all its parts where the box ends, and the package warns.
 * With an engine other than LuaTeX, a footnote inside a box of the content of a broken box (e.g. a `\footnotetext` in a `tabular`) can be put on the page after that of its mark: TeX does not see the mark of such a footnote when the content is split. Also, the footnote text is typeset through `\@footnotetext` with `\insert` redefined; a class or package whose `\@footnotetext` does not use `\insert\footins` is not supported there.
-* With LuaLaTeX, the part of a broken box on a page that has no footnote before the box can be up to `\skip\footins` (the space above the footnotes) shorter than without `page footnote`, when the part has no footnote but the rest of the box has one.
+* With LuaLaTeX, the part of a broken box on a page that has no footnote before the box is up to `\skip\footins` (the space above the footnotes) shorter than without `page footnote`, when the part has no footnote but the rest of the box has one.
 * With pLaTeX and upLaTeX in tate, a `\footnotetext` in vertical mode (e.g. right after a box) does not work with the new footnote code of LaTeX (`\DocumentMetadata`), with or without this package. Put it in a paragraph.
 
 ## Testing
