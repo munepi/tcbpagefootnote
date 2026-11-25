@@ -43,6 +43,10 @@
 %%   With the tcbnestbreak package, a breakable box inside a breakable
 %%   box is broken as well; with "page footnote" on both, the
 %%   footnotes of the box inside are put on the pages of their marks.
+%%   A footnote text that is typeset in a box and put into an
+%%   insertion later keeps the parameters of its insertion that
+%%   \@footnotetext of the page has set (e.g. the \splittopskip of the
+%%   footnotenosplit package).
 %%
 %% Limitations
 %%   * In multicols, and inside another box such as a minipage, a
@@ -67,7 +71,7 @@
 %%
 \RequirePackage{expl3}
 \ProvidesExplPackage{tcbpagefootnote}
-  {2026/11/24}{1.5}{Page footnotes from inside tcolorbox}
+  {2026/11/25}{1.6}{Page footnotes from inside tcolorbox}
 
 \RequirePackage{tcolorbox}
 \tcbuselibrary{hooks}
@@ -211,6 +215,32 @@
 %% -----------------------------------------------------------------
 \box_new:N \g__tcbpagefootnote_notes_box
 \box_new:N \l__tcbpagefootnote_notes_box
+
+%% The parameters of the insertion of a footnote text that is typeset
+%% in a box and put into an insertion later (here, and in 7. and 8.).
+%% \@footnotetext of the page sets them where it typesets the text:
+%% they are saved there and set again for the insertion, so that
+%% changes of the document or of a package (e.g. the \splittopskip of
+%% footnotenosplit) are kept.  Without saved values, they are those
+%% of the LaTeX kernel.
+\tl_new:N \g__tcbpagefootnote_ins_tl
+\cs_new_protected:Npn \__tcbpagefootnote_ins_save:
+  {
+    \tl_gset:Ne \g__tcbpagefootnote_ins_tl
+      {
+        \interlinepenalty \int_use:N \interlinepenalty \scan_stop:
+        \splittopskip \skip_use:N \splittopskip \scan_stop:
+        \splitmaxdepth \dim_use:N \splitmaxdepth \scan_stop:
+        \floatingpenalty \int_use:N \floatingpenalty \scan_stop:
+      }
+  }
+\cs_new_protected:Npn \__tcbpagefootnote_ins_kernel:
+  {
+    \interlinepenalty \interfootnotelinepenalty
+    \splittopskip \footnotesep
+    \splitmaxdepth \dp \strutbox
+    \floatingpenalty \@MM
+  }
 \dim_new:N \l__tcbpagefootnote_columnwidth_dim
 \dim_new:N \l__tcbpagefootnote_textwidth_dim
 %% The layer of the box with "page footnote" we are directly in
@@ -265,10 +295,8 @@
           {
             \reset@font
             \footnotesize
-            \interlinepenalty \interfootnotelinepenalty
-            \splittopskip \footnotesep
-            \splitmaxdepth \dp \strutbox
-            \floatingpenalty \@MM
+            \__tcbpagefootnote_ins_kernel:
+            \g__tcbpagefootnote_ins_tl
             \unvbox \l__tcbpagefootnote_notes_box
           }
       }
@@ -285,6 +313,7 @@
               \normalcolor
               \nobreak
               #1
+              \__tcbpagefootnote_ins_save:
             \color@endgroup
           }
       }
@@ -532,7 +561,8 @@
 
 %%     With the new footnote code of LaTeX, \@footnotetext of the
 %%     page is called in the same way, and the plug of the box makes
-%%     the \insert (as in 1'-3').
+%%     the \insert (as in 1'-3').  The parameters of the insertion
+%%     are set in the color group: they are set again after it.
 \cs_if_exist:NT \fnote_footnotetext:n
   {
     \NewSocketPlug { fntext/process } { tcbpagefootnote-insert }
@@ -541,14 +571,13 @@
           {
             \reset@font
             \footnotesize
-            \splittopskip \footnotesep
-            \splitmaxdepth \dp \strutbox
-            \floatingpenalty \@MM
             \color@begingroup
               \normalcolor
               \nobreak
               #1
+              \__tcbpagefootnote_ins_save:
             \color@endgroup
+            \g__tcbpagefootnote_ins_tl
           }
       }
     \cs_gset_protected:Npn \__tcbpagefootnote_insert_restore:
@@ -909,9 +938,10 @@
   }
 \AddToHook { cmd/tcb@draw@color@box/before } { \__tcbpagefootnote_typeset: }
 
-%% 8.1 (a) The footnote text in \g__tcbpagefootnote_note_box is kept:
-%%     the kept boxes are put before the earlier ones, so that
-%%     \lastbox is the first of them.
+%% 8.1 (a) The footnote text in \g__tcbpagefootnote_note_box is kept,
+%%     with the parameters of its insertion (see 1'-3'): the kept
+%%     boxes are put before the earlier ones, so that \lastbox is the
+%%     first of them.
 \cs_new_protected:Npn \__tcbpagefootnote_store:
   {
     \box_if_empty:NT \g__tcbpagefootnote_note_box
@@ -926,6 +956,9 @@
             + \box_dp:N \g__tcbpagefootnote_note_box
           }
       }
+    \tl_gset_eq:cN
+      { g__tcbpagefootnote_ins_ \int_use:N \g__tcbpagefootnote_note_int _tl }
+      \g__tcbpagefootnote_ins_tl
     \tex_global:D \tex_setbox:D \g__tcbpagefootnote_store_box \tex_vbox:D
       {
         \tex_box:D \g__tcbpagefootnote_note_box
@@ -947,6 +980,7 @@
       \cs_set:Npn \@makefntext ##1
         {
           \cs_set_eq:NN \insert \tex_insert:D
+          \__tcbpagefootnote_ins_save:
           \normalcolor
           \__tcbpagefootnote_makefntext:n {##1}
         }
@@ -955,6 +989,7 @@
           \tex_global:D \tex_setbox:D \g__tcbpagefootnote_note_box
             \tex_vbox:D
         }
+      \tl_gclear:N \g__tcbpagefootnote_ins_tl
       \__tcbpagefootnote_page_footnotetext:n {#1}
     \group_end:
     \__tcbpagefootnote_store:
@@ -973,10 +1008,9 @@
   {
     \reset@font
     \footnotesize
-    \interlinepenalty \interfootnotelinepenalty
-    \splittopskip \footnotesep
-    \splitmaxdepth \dp \strutbox
-    \floatingpenalty \@MM
+    \__tcbpagefootnote_ins_kernel:
+    \tl_use:c
+      { g__tcbpagefootnote_ins_ \int_use:N \g__tcbpagefootnote_out_int _tl }
     \tex_unvbox:D \g__tcbpagefootnote_note_box
   }
 
@@ -996,6 +1030,7 @@
               \normalcolor
               \nobreak
               #1
+              \__tcbpagefootnote_ins_save:
             \color@endgroup
           }
         \__tcbpagefootnote_store:

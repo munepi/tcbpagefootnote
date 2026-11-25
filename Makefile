@@ -16,6 +16,11 @@ TNB ?= ../tcbnestbreak
 ## are skipped if it is in neither place.
 PXPGFTATE ?= ../pxpgftate
 
+## The footnotenosplit package for the tests with it (test-*nosplit-*),
+## used if the TeX Live does not have it (TeX Live 2025); these tests
+## are skipped if it is in neither place.
+FNS ?= ../footnotenosplit
+
 .PHONY: ctanzip
 ctanzip: tcbpagefootnote.zip ## Archive for CTAN upload
 tcbpagefootnote.zip: clean $(DOCS)
@@ -60,10 +65,17 @@ tcbpagefootnote.pdf: tcbpagefootnote.tex tcbpagefootnote.sty
 ##    inside a breakable box; no overfull page and no split footnote.
 ##    With tagging, the footnote of the box without "page footnote" is
 ##    the one unpaired mark
+##  * test-*nosplit-* (with footnotenosplit): TPF-RULE OK: no page has
+##    a footnote rule without a footnote, and the first footnote below
+##    the rule is as far from it on every page (\TPFnosplit of
+##    test-common.tex); no warning of footnotenosplit and no "pop empty
+##    color page stack".  test-nosplit.tex has footnotes that TeX
+##    moves to the next page; the other tests are run as they are
+##    (*-nosplit-*; "first": footnotenosplit is loaded first)
 ##  * test-errors-*: the expected error message
 ## A test is "<engine>:<jobname>:<input>".  The output of the engine and
 ## of (x)dvipdfmx is kept in <jobname>.term.
-## $(TNB) and $(PXPGFTATE) are put into TEXINPUTS only for the tests
+## $(TNB), $(PXPGFTATE) and $(FNS) are put into TEXINPUTS only for the tests
 ## that need them: a directory with files of the same job names (as
 ## the tests of tcbnestbreak have) must not be searched by the other
 ## tests.
@@ -140,6 +152,37 @@ TESTS := \
   uplatex:test-tate-breakable-long-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-breakable-long}\input test-tate' \
   lualatex:test-tate-breakable-long-lualatex:'\def\TPFfile{test-breakable-long}\input test-tate'
 
+NS := \def\TPFnosplit{1}
+NOSPLIT := \
+  pdflatex:test-nosplit-pdflatex:'\input test-nosplit' \
+  xelatex:test-nosplit-xelatex:'\input test-nosplit' \
+  lualatex:test-nosplit-lualatex:'\input test-nosplit' \
+  lualatex:test-nosplit-ltjsarticle-lualatex:'\def\CLS{ltjsarticle}\input test-nosplit' \
+  platex:test-nosplit-platex:'\def\CLS{jarticle}\input test-nosplit' \
+  platex:test-nosplit-jsarticle-platex:'\def\CLS{jsarticle}\input test-nosplit' \
+  uplatex:test-nosplit-uplatex:'\def\CLS{ujarticle}\input test-nosplit' \
+  pdflatex:test-hyperref-nosplit-first-pdflatex:'\def\TPFfirst{1}\def\TPFhyperref{1}\input test-nosplit' \
+  lualatex:test-hyperref-nosplit-first-lualatex:'\def\TPFfirst{1}\def\TPFhyperref{1}\input test-nosplit' \
+  pdflatex:test-tagging-nosplit-pdflatex:'\def\TPFfile{test-nosplit}\input test-tagging' \
+  xelatex:test-tagging-nosplit-xelatex:'\def\TPFfile{test-nosplit}\input test-tagging' \
+  lualatex:test-tagging-nosplit-lualatex:'\def\TPFfile{test-nosplit}\input test-tagging' \
+  pdflatex:test-basic-nosplit-pdflatex:'$(NS)\input test-basic' \
+  lualatex:test-basic-nosplit-lualatex:'$(NS)\input test-basic' \
+  platex:test-basic-nosplit-platex:'\def\CLS{jarticle}$(NS)\input test-basic' \
+  pdflatex:test-hyperref-nosplit-pdflatex:'$(NS)\input test-hyperref' \
+  lualatex:test-hyperref-nosplit-lualatex:'$(NS)\input test-hyperref' \
+  pdflatex:test-breakable-long-nosplit-pdflatex:'$(NS)\input test-breakable-long' \
+  xelatex:test-breakable-long-nosplit-xelatex:'$(NS)\input test-breakable-long' \
+  lualatex:test-breakable-long-nosplit-lualatex:'$(NS)\input test-breakable-long' \
+  platex:test-breakable-long-nosplit-platex:'\def\CLS{jarticle}$(NS)\input test-breakable-long' \
+  uplatex:test-breakable-long-nosplit-uplatex:'\def\CLS{ujarticle}$(NS)\input test-breakable-long' \
+  pdflatex:test-tagging-basic-nosplit-pdflatex:'$(NS)\input test-tagging' \
+  lualatex:test-tagging-basic-nosplit-lualatex:'$(NS)\input test-tagging' \
+  pdflatex:test-tagging-breakable-long-nosplit-pdflatex:'$(NS)\def\TPFfile{test-breakable-long}\input test-tagging' \
+  lualatex:test-tagging-breakable-long-nosplit-lualatex:'$(NS)\def\TPFfile{test-breakable-long}\input test-tagging' \
+  platex:test-tate-breakable-long-nosplit-platex:'$(NS)\def\TPFfile{test-breakable-long}\input test-tate' \
+  lualatex:test-tate-breakable-long-nosplit-lualatex:'$(NS)\def\TPFfile{test-breakable-long}\input test-tate'
+
 NESTED := \
   pdflatex:test-nested-pdflatex:'\input test-nested' \
   xelatex:test-nested-xelatex:'\input test-nested' \
@@ -153,7 +196,10 @@ NESTED := \
   lualatex:test-tagging-nested-lualatex:'\def\TPFfile{test-nested}\input test-tagging' \
   platex:test-tate-nested-platex:'\def\TPFfile{test-nested}\input test-tate' \
   uplatex:test-tate-nested-uplatex:'\def\CLS{utarticle}\def\TPFfile{test-nested}\input test-tate' \
-  lualatex:test-tate-nested-lualatex:'\def\TPFfile{test-nested}\input test-tate'
+  lualatex:test-tate-nested-lualatex:'\def\TPFfile{test-nested}\input test-tate' \
+  pdflatex:test-nested-nosplit-pdflatex:'$(NS)\input test-nested' \
+  lualatex:test-nested-nosplit-lualatex:'$(NS)\input test-nested' \
+  platex:test-nested-nosplit-platex:'\def\CLS{jarticle}$(NS)\input test-nested'
 
 HASTNB := $(wildcard $(TNB)/tcbnestbreak.sty)
 
@@ -171,13 +217,19 @@ test:
 	if kpsewhich pxpgftate.sty >/dev/null 2>&1; then pxp=kpse; \
 	elif [ -f $(PXPGFTATE)/pxpgftate.sty ]; then pxp=$(PXPGFTATE); \
 	else pxp=; fi; \
+	if kpsewhich footnotenosplit.sty >/dev/null 2>&1; then fns=kpse; \
+	elif [ -f $(FNS)/footnotenosplit.sty ]; then fns=$(FNS); \
+	else fns=; fi; \
 	$(if $(HASTNB),,echo "== test-nested skipped: no $(TNB)/tcbnestbreak.sty";) \
-	for t in $(TESTS) $(if $(HASTNB),$(NESTED)); do \
+	for t in $(TESTS) $(NOSPLIT) $(if $(HASTNB),$(NESTED)); do \
 	  eng=$${t%%:*}; rest=$${t#*:}; job=$${rest%%:*}; in=$${rest#*:}; \
 	  echo "== $$eng $$job"; \
 	  ti=.; case $$job in test-*nested-*) ti="$$ti:$(TNB)";; esac; \
 	  case $$job in test-tate-*platex) \
 	    case "$$pxp" in "") echo "   skipped: no pxpgftate.sty"; continue;; kpse) ;; *) ti="$$ti:$$pxp";; esac;; \
+	  esac; \
+	  case $$job in test-*nosplit-*) \
+	    case "$$fns" in "") echo "   skipped: no footnotenosplit.sty"; continue;; kpse) ;; *) ti="$$ti:$$fns";; esac;; \
 	  esac; \
 	  pre="env TEXINPUTS=$$ti:$$TEXINPUTS"; \
 	  rm -f $$job.aux $$job.dvi $$job.xdv; \
@@ -199,6 +251,13 @@ test:
 	    if grep 'Overfull .vbox\|^% split' $$job.log; then \
 	      echo "NG: overfull page or split footnote in $$job.log"; exit 1; fi;; \
 	  esac; \
+	  case $$job in test-*nosplit-*) \
+	    grep -q '^TPF-RULE OK' $$job.log || \
+	      { echo "NG: no TPF-RULE OK in $$job.log"; exit 1; }; \
+	    if cat $$job.log $$job.term | \
+	      grep 'footnotenosplit Warning\|pop empty color'; then \
+	      echo "NG: warning in $$job.log or $$job.term"; exit 1; fi;; \
+	  esac; \
 	  case $$job in test-*hyperref-*) \
 	    if cat $$job.log $$job.term | \
 	      grep -i 'duplicate\|already defined\|does not exist\|unreferenced destination' | \
@@ -207,7 +266,7 @@ test:
 	  esac; \
 	  case $$job in test-tagging-*platex|test-tagging-japanese-*) ;; test-tagging-*) \
 	    tags=`texlua test-tagging.lua $$job.pdf`; echo "$$tags" >>$$job.term; \
-	    case $$job in test-tagging-breakable-*) want=0;; test-tagging-nested-*) want=1;; *) want=2;; esac; \
+	    case $$job in test-tagging-breakable-*|test-tagging-nosplit-*) want=0;; test-tagging-nested-*) want=1;; *) want=2;; esac; \
 	    echo "$$tags" | grep -q "^TPF-TAGS: [1-9][0-9]* paired, $$want unpaired" || \
 	      { echo "$$tags"; echo "NG: want $$want unpaired footnote mark(s) in $$job.pdf"; exit 1; };; \
 	  esac; \

@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{tcbpagefootnote}
 \usepackage[colorlinks, allcolors=blue!50!black]{hyperref}
-\newcommand*\tpfversion{v1.5 (2026/11/24)}
+\newcommand*\tpfversion{v1.6 (2026/11/25)}
 \newcommand*\cs[1]{\texttt{\char`\\#1}}
 \newcommand*\pkg[1]{\textsf{#1}}
 \newcommand*\key[1]{\texttt{#1}}
@@ -132,6 +132,16 @@ box.  If a package has put code around \cs{@footnotetext}, e.g.\ to set
 the footnotes in another width, it acts on the footnotes of a box as
 well.
 
+\paragraph{Footnotes that are not split}
+The package works with the \pkg{footnotenosplit} package, which keeps
+\TeX{} from splitting a footnote: a footnote of a box that \TeX{} moves
+to the next page as a whole gets the space of \cs{footnotetopkern}
+above it, as a footnote of the body text does.  In general, where the
+package typesets a footnote text in a box and puts it into the
+footnote insertion later, the insertion gets the parameters that the
+\cs{@footnotetext} of the page has set (\cs{interlinepenalty},
+\cs{splittopskip}, \cs{splitmaxdepth}, \cs{floatingpenalty}).
+
 \paragraph{Vertical writing}
 \key{page footnote} also works in tate, with the tate classes of
 p\LaTeX{} and up\LaTeX{} (e.g.\ \texttt{tarticle} and
@@ -233,17 +243,33 @@ expected page (\texttt{TPF-RESULT OK}).
   \texttt{test-tate.tex}      & \texttt{test-basic.tex} and the
                                 breakable tests in tate\\
                               & (tarticle, utarticle, ltjtarticle)\\
+  \texttt{test-nosplit.tex}   & with \pkg{footnotenosplit}: footnotes
+                                that \TeX{} moves to the next page\\
   \texttt{test-errors.tex}    & the error messages\\
   \hline
 \end{tabular}
 \end{center}
 \texttt{test-basic.tex} and \texttt{test-breakable-long.tex} are also
 run, without and with tagging, with code around \cs{@footnotetext} that
-sets the footnotes of the page in another width.
+sets the footnotes of the page in another width.  With
+\pkg{footnotenosplit}, \texttt{test-common.tex} also checks that no
+page has a footnote rule without a footnote and that the first footnote
+below the rule is as far from the rule on every page
+(\texttt{TPF-RULE OK}); \texttt{test-basic.tex},
+\texttt{test-hyperref.tex}, \texttt{test-breakable-long.tex} and
+\texttt{test-nested.tex} are run in this way as well.
 
 \section{History}
 
 \begin{description}
+\item[v1.6 (2026/11/25)] A footnote text that is typeset in a box and
+  put into the footnote insertion later (with an engine other than
+  Lua\TeX{} in a broken box, and with the new footnote code of \LaTeX)
+  keeps the parameters of its insertion that the \cs{@footnotetext} of
+  the page has set.  Before, with the \pkg{footnotenosplit} package,
+  such a footnote that \TeX{} moved to the next page was nearer to the
+  footnote rule, by \cs{footnotetopkern}, than a footnote of the body
+  text.
 \item[v1.5 (2026/11/24)] With Lua\LaTeX, what a part of a broken box
   leaves for its footnotes follows the \cs{count}\cs{footins} of the
   column of the part, which a package may change from column to

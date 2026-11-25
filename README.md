@@ -17,6 +17,8 @@ The tcbpagefootnote package adds the tcolorbox key `page footnote`. With it, the
 
 **Tagged PDF.** With the new footnote code of LaTeX (loaded e.g. by `\DocumentMetadata{tagging=on}`), the footnote text is typeset where its mark is, as in a minipage, and the typeset text is put into the footnote insertion after the box. The text is typeset by the `\@footnotetext` of the page: if a package has put code around `\@footnotetext`, e.g. to set the footnotes in another width, it acts on the footnotes of a box as well. In the structure tree, the footnote (`FENote`) then directly follows its mark (`Lbl`), as for a footnote in the body text ([latex3/tagging-project#1709](https://github.com/latex3/tagging-project/issues/1709)).
 
+**Footnotes that are not split.** The package works with the [footnotenosplit](https://ctan.org/pkg/footnotenosplit) package, which keeps TeX from splitting a footnote: a footnote of a box that TeX moves to the next page as a whole gets the space of `\footnotetopkern` above it, as a footnote of the body text does. In general, where the package typesets a footnote text in a box and puts it into the footnote insertion later, the insertion gets the parameters that the `\@footnotetext` of the page has set (`\interlinepenalty`, `\splittopskip`, `\splitmaxdepth`, `\floatingpenalty`).
+
 **Vertical writing.** `page footnote` also works in tate, with the tate classes of pLaTeX and upLaTeX (e.g. `tarticle` and `utarticle`) and of LuaTeX-ja (e.g. `ltjtarticle`). With pLaTeX and upLaTeX, load the [pxpgftate](https://ctan.org/pkg/pxpgftate) package as well: without it, TikZ/PGF, and so tcolorbox, draws the boxes sideways in tate. tcbpagefootnote does not load it itself.
 
 ```latex
@@ -71,7 +73,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 
 ## Testing
 
-`make test` compiles every test with pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and upLaTeX (+ dvipdfmx), and checks the log. `make test TEXBIN=<directory of the binaries>` runs the tests with another TeX Live than the one in `PATH`; `PXPGFTATE=<directory>` (default: `../pxpgftate`) is where pxpgftate is taken from if that TeX Live does not have it.
+`make test` compiles every test with pdfLaTeX, XeLaTeX, LuaLaTeX, pLaTeX and upLaTeX (+ dvipdfmx), and checks the log. `make test TEXBIN=<directory of the binaries>` runs the tests with another TeX Live than the one in `PATH`; `PXPGFTATE=<directory>` (default: `../pxpgftate`) and `FNS=<directory>` (default: `../footnotenosplit`) are where pxpgftate and footnotenosplit are taken from if that TeX Live does not have them.
 
 * `TPF-RESULT OK`: every footnote text is typeset exactly once, with its own mark, on the expected page, as a page footnote or as a footnote of the box (recorded at shipout to the `.aux` file and checked when it is read back at `\end{document}`; see `test-common.tex`).
 * `test-hyperref`, `test-tagging-hyperref`: no warning on a duplicate or missing destination in the log or in the output of the engine and (x)dvipdfmx.
@@ -82,6 +84,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 * `test-tagging` (pdflatex, xelatex, lualatex): `test-tagging.lua` reads the structure tree with `show-pdf-tags` and finds every `FENote` right after its `Lbl`, except the two `\footnotemark` whose texts are given later by `\footnotetext`.
 * `test-tate`: the same checks as for `test-basic`, `test-breakable` and `test-breakable-long`, in tate.
 * `test-nested` (if tcbnestbreak is in `../tcbnestbreak`, or in `TNB=<directory>`): every footnote text is on the page of its mark, no overfull page and no split footnote; also with hyperref, with tagging and in tate.
+* `test-nosplit` and the tests named `*-nosplit` (with footnotenosplit): `TPF-RULE OK`: no page has a footnote rule without a footnote, and the first footnote below the rule is as far from the rule on every page (from the positions on the page at shipout), also where it is a footnote that TeX has moved to the next page; no warning of footnotenosplit.
 * `test-errors`: the expected error message.
 
 | Test | Engines | What it covers |
@@ -95,6 +98,7 @@ Copy `tcbpagefootnote.sty` and `tcbpagefootnote.lua` to your local TeX tree:
 | `test-japanese.tex` | lualatex (ltjbook), platex (jbook), uplatex (ujbook) | a Japanese document |
 | `test-tagging.tex` | pdflatex, xelatex, lualatex, platex, uplatex | `test-basic.tex` (and `test-breakable.tex`, `test-breakable-long.tex`, `test-japanese.tex`, with hyperref) with `\DocumentMetadata{tagging=on}`; pLaTeX and upLaTeX do not write a structure tree, so only the log is checked |
 | `test-tate.tex` | platex (tarticle), uplatex (utarticle), lualatex (ltjtarticle) | `test-basic.tex`, `test-breakable.tex` and `test-breakable-long.tex` in tate, with pxpgftate for pLaTeX and upLaTeX |
+| `test-nosplit.tex` | pdflatex, xelatex, lualatex (article, ltjsarticle), platex (jarticle, jsarticle), uplatex; with hyperref, with tagging | with footnotenosplit: footnotes that TeX moves to the next page as a whole, of the body text, of an unbreakable box and of a breakable box, also of boxes with a text color. `test-basic.tex`, `test-hyperref.tex`, `test-breakable-long.tex` and `test-nested.tex` are also run with footnotenosplit, also with tagging and in tate |
 | `test-errors.tex` | pdflatex | the error messages (`float`, `after`, key already defined) |
 
 `test-common.tex` holds the helpers shared by the tests, and `test-tagging.lua` the check of the structure tree.

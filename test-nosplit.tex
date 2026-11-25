@@ -1,0 +1,129 @@
+%% test-nosplit.tex
+%% ================
+%% Typesetting test for every engine: "page footnote" together with
+%% the footnotenosplit package, where TeX moves a footnote to the next
+%% page as a whole.
+%%
+%%   pdflatex test-nosplit.tex   (or xelatex / lualatex)
+%%   platex  -jobname=test-nosplit "\def\CLS{jarticle}\input test-nosplit"
+%%   && dvipdfmx test-nosplit
+%% The class is article by default; set \CLS for another one.  With
+%% pTeX the class option dvipdfmx is given.  \TPFfirst loads
+%% footnotenosplit before tcbpagefootnote (default: after it),
+%% \TPFhyperref loads hyperref.  With tagging:
+%%   pdflatex -jobname=test-tagging-nosplit "\def\TPFfile{test-nosplit}\input test-tagging"
+%%
+%% footnotenosplit keeps a footnote from being split, discards a
+%% \box\footins that has no line of a footnote (no lone footnote rule)
+%% and gives a footnote that is moved to the next page the space of
+%% \footnotetopkern above it.  test-common.tex loads it (\TPFnosplit)
+%% with \footnotetopkern=2pt and an \@makefntext that starts with
+%% \kern\footnotetopkern.
+%%
+%% What is covered (every footnote that is moved is marked "later"):
+%%   1. a long footnote of the body text at the bottom of a page, for
+%%      comparison;
+%%   2. the same footnote in a box with "page footnote" at the bottom
+%%      of a page, also in a box with a text color;
+%%   3. with a small \dimen\footins (the largest height of the
+%%      footnotes of a page), the third footnote of a box: of an
+%%      unbreakable box and of a breakable box, which leaves room for
+%%      its footnotes but does not know \dimen\footins, also with a
+%%      text color.
+%%
+%% What to check:
+%%   * TPF-RESULT OK: every footnote text is typeset once, and the
+%%     footnotes marked "later" are on the next page;
+%%   * TPF-RULE OK: no page has a footnote rule without a footnote, and
+%%     the first footnote below the rule is as far from the rule on
+%%     every page: where it is a moved footnote as well;
+%%   * no error, no warning of tcbpagefootnote or of footnotenosplit
+%%     and no "pop empty color page stack" of pdfTeX.
+\ifdefined\CLS\else\def\CLS{article}\fi
+\ifdefined\ptexversion\def\CLSOPT{dvipdfmx}\else\def\CLSOPT{}\fi
+\expandafter\documentclass\expandafter[\CLSOPT]{\CLS}
+\ifdefined\TPFfirst\usepackage{footnotenosplit}\fi
+\usepackage{tcbpagefootnote}
+\tcbuselibrary{breakable}
+\ifdefined\TPFhyperref\usepackage{hyperref}\fi
+\ifdefined\TPFnosplit\else\def\TPFnosplit{1}\fi
+\input{test-common}
+\raggedbottom
+\makeatletter
+%% \TPFbottom{<n>}: go to a new page and leave about <n> lines of it
+\newcommand\TPFbottom[1]{%
+  \newpage
+  \noindent\strut\par
+  \vspace{\dimexpr\textheight-#1\baselineskip-\baselineskip\relax}}
+%% A footnote text of about ten lines
+\newcommand\TPFlong{%
+  \count@=0
+  \loop\advance\count@ by 1 \TPF@filler\ifnum\count@<14 \repeat}
+%% \TPFdimen: \dimen\footins for two footnotes of one line, not three
+\newcommand\TPFdimen{%
+  \begingroup
+    \footnotesize
+    \setbox\z@\hbox{\strut}%
+    \dimen@=\dimexpr\ht\z@+\dp\z@+\footnotetopkern\relax
+    \global\dimen\footins=2.5\dimen@
+  \endgroup}
+\newdimen\TPFsaved
+\TPFsaved=\dimen\footins
+\makeatother
+\begin{document}
+\section{A footnote of the body text}
+
+\TPFfiller{2}
+\TPFbottom{4}
+The last line of the page\TPFfootnote[later]{\TPFlong}.
+
+\section{A box at the bottom of a page}
+
+\TPFfiller{2}
+\TPFbottom{7}
+\begin{tcolorbox}[page footnote]
+The box\TPFfootnote[later]{\TPFlong}.
+\end{tcolorbox}
+\newpage
+\TPFfiller{2}
+\TPFbottom{7}
+\begin{tcolorbox}[page footnote, coltext=blue]
+The box with a text color\TPFfootnote[later]{\TPFlong}.
+\end{tcolorbox}
+\newpage
+
+\section{More footnotes than a page takes}
+
+\TPFdimen
+In the body text: one\TPFfootnote{The first one.},
+two\TPFfootnote{The second one.} and
+three\TPFfootnote[later]{The third one is moved.}.
+\newpage
+
+\begin{tcolorbox}[page footnote]
+In an unbreakable box: one\TPFfootnote{The first one.},
+two\TPFfootnote{The second one.} and
+three\TPFfootnote[later]{The third one is moved.}.
+\end{tcolorbox}
+\newpage
+
+\begin{tcolorbox}[breakable, page footnote]
+In a breakable box: one\TPFfootnote{The first one.},
+two\TPFfootnote{The second one.} and
+three\TPFfootnote[later]{The third one is moved.}.
+\end{tcolorbox}
+\newpage
+
+\begin{tcolorbox}[breakable, page footnote, coltext=blue]
+In a breakable box with a text color: one\TPFfootnote{The first one.},
+two\TPFfootnote{The second one.} and
+three\TPFfootnote[later]{The third one is moved.}.
+\end{tcolorbox}
+\newpage
+\global\dimen\footins=\TPFsaved
+
+The last page\TPFfootnote{The last footnote.}.
+
+\TPFcounter{footnote}{16}
+\TPFcounter{mpfootnote}{0}
+\end{document}

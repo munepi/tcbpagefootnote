@@ -24,6 +24,13 @@
 %%   layout does, that sets the footnotes of the page in this width
 %%   (computed from the \columnwidth that \@footnotetext is called
 %%   with).  A page footnote is then a footnote set in this width.
+%% \TPFnosplit (optional, defined before this file is input)
+%%   The footnotenosplit package is loaded (footnotes are not split;
+%%   an empty \box\footins is discarded), with \footnotetopkern=2pt
+%%   and an \@makefntext that starts with \kern\footnotetopkern.  The
+%%   position of \footnoterule and of each text of a page footnote is
+%%   written to the .aux file as well, and two more things are checked
+%%   (TPF-RULE and TPF-TOP, see below).
 %%
 %% For each mark and each text, the page, the mark (\@thefnmark), the
 %% hyperref anchor (if any) and, for a text, whether it is set in the
@@ -33,9 +40,24 @@
 %%   * its text is typeset exactly once, with the same mark;
 %%   * the text is where <kind> says;
 %%   * with hyperref, the anchor at the text is that of the mark.
+%% With \TPFnosplit also:
+%%   * a page with a footnote rule has the text of a page footnote
+%%     (TPF-RULE: no lone rule);
+%%   * the first text of a page footnote below the rule is as far from
+%%     the rule on every page (TPF-TOP): a footnote that TeX has moved
+%%     to the next page has the space of \footnotetopkern above it as
+%%     well.
 %% Logs "TPF-NOTE NG: ..." for each failure, then "TPF-RESULT OK (<n>
 %% notes)" or "TPF-RESULT NG".  A single run is enough.
 \makeatletter
+\ifdefined\TPFnosplit
+  \RequirePackage{footnotenosplit}
+  \footnotetopkern=2pt
+  \renewcommand\@makefntext[1]{%
+    \kern\footnotetopkern
+    \parindent 1em\noindent
+    \hb@xt@1.8em{\hss\@makefnmark}#1}
+\fi
 \ExplSyntaxOn
 \int_new:N  \g__tpf_id_int
 \seq_new:N  \g__tpf_ids_seq
@@ -104,6 +126,18 @@
         { \dim_compare:nNnTF { \hsize } = { \g__tpf_colwd_dim } { 1 } { 0 } }
         { \__tpf_frozen_href:N \@currentHref }
       }
+    \cs_if_exist:NT \TPFnosplit
+      {
+        \tex_savepos:D
+        \__tpf_shipout:n
+          {
+            \exp_not:N \exp_not:N \exp_not:N \TPF@p
+            {#1} {#2} { \exp_not:N \thepage }
+            { \dim_compare:nNnTF { \hsize } = { \g__tpf_colwd_dim } { 1 } { 0 } }
+            { \exp_not:N \int_use:N \exp_not:N \tex_lastxpos:D }
+            { \exp_not:N \int_use:N \exp_not:N \tex_lastypos:D }
+          }
+      }
   }
 \NewDocumentCommand \TPFfootnote { O{page} +m }
   {
@@ -150,6 +184,7 @@
 
 \cs_new_protected:Npn \__tpf_check:
   {
+    \cs_if_exist:NT \TPFnosplit { \__tpf_check_rules: }
     \seq_map_function:NN \g__tpf_ids_seq \__tpf_check_one:n
     \seq_if_empty:NT \g__tpf_ids_seq { \__tpf_ng:n { no~footnotes } }
     \bool_if:NTF \g__tpf_ng_bool
@@ -202,6 +237,21 @@
       { \iow_term:e { TPF-NOTE~OK:~\l__tpf_tmp_tl } }
       { \__tpf_ng:n { \l__tpf_tmp_tl } }
   }
+%% With \TPFnosplit, TeX may move a page footnote to the next page as
+%% a whole, as it does with a footnote of the body text: \@makefntext
+%% starts with a \kern, where the insertion can be split.  (Where the
+%% parts of a broken box leave room for their footnotes, "make test"
+%% looks for "% split" in the log.)
+\prg_new_conditional:Npnn \__tpf_moved:n #1 { p }
+  {
+    \cs_if_exist:NTF \TPFnosplit
+      {
+        \int_compare:nNnTF { \tl_use:c { g__tpf_tpage_#1_tl } }
+          = { \tl_use:c { g__tpf_mpage_#1_tl } + 1 }
+          { \prg_return_true: } { \prg_return_false: }
+      }
+      { \prg_return_false: }
+  }
 \prg_new_conditional:Npnn \__tpf_where:n #1 { p }
   {
     \str_case_e:nnF { \tl_use:c { g__tpf_tkind_#1_tl } }
@@ -210,8 +260,11 @@
           {
             \bool_if:nTF
               {
-                \int_compare_p:nNn { \tl_use:c { g__tpf_tpage_#1_tl } }
-                  = { \tl_use:c { g__tpf_mpage_#1_tl } }
+                (
+                  \int_compare_p:nNn { \tl_use:c { g__tpf_tpage_#1_tl } }
+                    = { \tl_use:c { g__tpf_mpage_#1_tl } }
+                  || \__tpf_moved_p:n {#1}
+                )
                 && \str_if_eq_p:ee { \tl_use:c { g__tpf_twide_#1_tl } } { 1 }
               }
               { \prg_return_true: } { \prg_return_false: }
@@ -238,6 +291,131 @@
           }
       }
       { \prg_return_false: }
+  }
+\ExplSyntaxOff
+
+%% \TPFnosplit: the footnote rule of each page and the first text of a
+%% page footnote below it
+\ExplSyntaxOn
+\cs_new_eq:NN \TPF@r \use_none:nnn
+\cs_new_eq:NN \TPF@p \use_none:nnnnnn
+\cs_new_eq:NN \__tpf_footnoterule: \prg_do_nothing:
+\cs_new_eq:NN \__tpf_makecol: \prg_do_nothing:
+\bool_new:N \l__tpf_makecol_bool
+\seq_new:N \g__tpf_rules_seq
+\int_new:N \l__tpf_dist_int
+\int_new:N \l__tpf_min_int
+\int_new:N \l__tpf_max_int
+\cs_if_exist:NT \TPFnosplit
+  {
+    \AddToHook { begindocument/end }
+      {
+        \cs_set_eq:NN \__tpf_footnoterule: \footnoterule
+        %% the rule of the page, not that of a minipage
+        \cs_set_eq:NN \__tpf_makecol: \@makecol
+        \cs_set_protected:Npn \@makecol
+          { \bool_set_true:N \l__tpf_makecol_bool \__tpf_makecol: }
+        \cs_set_protected:Npn \footnoterule
+          {
+            \bool_if:NT \l__tpf_makecol_bool
+              {
+                \tex_savepos:D
+                \__tpf_shipout:n
+                  {
+                    \exp_not:N \exp_not:N \exp_not:N \TPF@r
+                    { \exp_not:N \thepage }
+                    { \exp_not:N \int_use:N \exp_not:N \tex_lastxpos:D }
+                    { \exp_not:N \int_use:N \exp_not:N \tex_lastypos:D }
+                  }
+              }
+            \__tpf_footnoterule:
+          }
+      }
+    \AddToHook { enddocument/afterlastpage }
+      {
+        \cs_gset_eq:NN \TPF@r \__tpf_record_rule:nnn
+        \cs_gset_eq:NN \TPF@p \__tpf_record_pos:nnnnnn
+      }
+  }
+%% #1: page, #2 and #3: position
+\cs_new_protected:Npn \__tpf_record_rule:nnn #1#2#3
+  {
+    \tl_if_exist:cTF { g__tpf_rx_#1_tl }
+      { \__tpf_ng:n { two~footnote~rules~on~p.#1 } }
+      { \seq_gput_right:Nn \g__tpf_rules_seq {#1} }
+    \tl_gset:cn { g__tpf_rx_#1_tl } {#2}
+    \tl_gset:cn { g__tpf_ry_#1_tl } {#3}
+  }
+%% #1: id, #2: kind, #3: page, #4: in the width of the page,
+%% #5 and #6: position.  The first text of a page footnote in the
+%% records of a page is the first one below the rule.
+\cs_new_protected:Npn \__tpf_record_pos:nnnnnn #1#2#3#4#5#6
+  {
+    \bool_lazy_and:nnT
+      { \str_if_eq_p:nn {#4} { 1 } }
+      { ! \str_if_eq_p:nn {#2} { box } }
+      {
+        \tl_if_exist:cF { g__tpf_px_#3_tl }
+          {
+            \tl_gset:cn { g__tpf_pid_#3_tl } {#1}
+            \tl_gset:cn { g__tpf_px_#3_tl } {#5}
+            \tl_gset:cn { g__tpf_py_#3_tl } {#6}
+          }
+      }
+  }
+\cs_new_protected:Npn \__tpf_check_rules:
+  {
+    \int_set_eq:NN \l__tpf_min_int \c_max_int
+    \int_zero:N \l__tpf_max_int
+    \seq_map_inline:Nn \g__tpf_rules_seq
+      {
+        \tl_if_exist:cTF { g__tpf_px_##1_tl }
+          {
+            \int_set:Nn \l__tpf_dist_int
+              {
+                \int_abs:n
+                  { \tl_use:c { g__tpf_px_##1_tl } - \tl_use:c { g__tpf_rx_##1_tl } }
+                + \int_abs:n
+                  { \tl_use:c { g__tpf_py_##1_tl } - \tl_use:c { g__tpf_ry_##1_tl } }
+              }
+            \iow_term:e
+              {
+                TPF-TOP:~p.##1,~text~\tl_use:c { g__tpf_pid_##1_tl }~
+                is~\int_use:N \l__tpf_dist_int sp~from~the~rule
+              }
+            \int_set:Nn \l__tpf_min_int
+              { \int_min:nn { \l__tpf_min_int } { \l__tpf_dist_int } }
+            \int_set:Nn \l__tpf_max_int
+              { \int_max:nn { \l__tpf_max_int } { \l__tpf_dist_int } }
+          }
+          { \__tpf_ng:n { lone~footnote~rule~on~p.##1 } }
+      }
+    \seq_if_empty:NTF \g__tpf_rules_seq
+      { \__tpf_ng:n { no~footnote~rule } }
+      {
+        %% 0.25pt: without the space of \footnotetopkern a moved
+        %% footnote is 2pt nearer to the rule.  A first line that is
+        %% higher than \footnotesep (jarticle: by 0.04pt) is that much
+        %% nearer when it is moved, also in the body text.
+        \int_compare:nNnTF
+          { \l__tpf_max_int - \l__tpf_min_int } > { 16384 }
+          {
+            \__tpf_ng:n
+              {
+                the~first~footnote~of~a~page~is~
+                \int_use:N \l__tpf_min_int sp~to~
+                \int_use:N \l__tpf_max_int sp~from~the~rule
+              }
+          }
+          {
+            \iow_term:e
+              {
+                TPF-RULE~OK~(\seq_count:N \g__tpf_rules_seq \c_space_tl
+                rules,~\int_use:N \l__tpf_min_int sp~to~
+                \int_use:N \l__tpf_max_int sp)
+              }
+          }
+      }
   }
 \ExplSyntaxOff
 
